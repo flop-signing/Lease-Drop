@@ -1,0 +1,50 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/LEASE_DROP_DEV_Test}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    dbcp2:
+      validation-query: SELECT 1
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+      naming:
+        physical-strategy: com.bedatasolutions.leaseDrop.config.db.UpperCasePhysicalNamingStrategy
+    show-sql: true
+    open-in-view: false
+    defer-datasource-initialization: true
+    generate-ddl: true
+    properties:
+      hibernate:
+        format_sql: true
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /docs
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+
+# AWS Cognito Configuration (Commented Out)
+#aws:
+#  cognito:
+#    accessKey: ${AWS_ACCESS_KEY}
+#    secretKey: ${AWS_SECRET_KEY}
+#    region: ${AWS_REGION:eu-west-2}
+#    domain: ${AWS_COGNITO_DOMAIN}
+#    userPoolId: ${AWS_USER_POOL_ID}
+#    userPoolClientId: ${AWS_USER_POOL_CLIENT_ID}
+#    userPoolClientSecret: ${AWS_USER_POOL_CLIENT_SECRET}
+#    logoutRedirectUrl: "{baseUrl}/logout"
+
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          issuer-uri: https://cognito-idp.${AWS_REGION}.amazonaws.com/${AWS_USER_POOL_ID}
+#          jwk-set-uri: https://cognito-idp.${AWS_REGION}.amazonaws.com/${AWS_USER_POOL_ID}/.well-known/jwks.json
