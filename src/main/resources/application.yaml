@@ -1,0 +1,57 @@
+server:
+  port:8080
+#aws:
+#  cognito:
+#    accessKey: AKIAWAA66HUA5NW4OKU3
+#    secretKey: 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
+#    region: eu-west-2
+#    domain: https://eu-west-21dofqv43e.auth.eu-west-2.amazoncognito.com
+#    userPoolId: eu-west-2_1DoFQv43e
+#    userPoolClientId: 18b9epr1j8t457alomb3od02e2
+#    userPoolClientSecret: 1endn28ql0npllrqf49nb991enieib06rrfhlu1jpr49jn0qkc5o
+#    logoutRedirectUrl: "{baseUrl}/logout"
+
+app:
+  server:
+    file:
+      root:
+        path: "C:/Users/Mehedi/Documents/files/"
+spring:
+#  application:`
+#    name: cognito_poc
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          issuer-uri: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_1DoFQv43e
+#          jwk-set-uri: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_1DoFQv43e/.well-known/jwks.json
+  datasource:
+    url: jdbc:postgresql://localhost:5432/LEASE_DROP_DEV_Test
+    username: postgres
+    password: postgres
+#    driver-class-name: org.postgresql.Driver
+    dbcp2:
+      validation-query: SELECT 1
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: com.bedatasolutions.leaseDrop.config.db.UpperCasePhysicalNamingStrategy
+    show-sql: true
+    open-in-view: false
+    defer-datasource-initialization: true
+    generate-ddl: true
+    properties:
+      hibernate:
+        format_sql: true
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /docs
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+#server:
+#  port: 7373
+
