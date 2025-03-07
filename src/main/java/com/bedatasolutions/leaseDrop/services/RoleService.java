@@ -1,9 +1,12 @@
 package com.bedatasolutions.leaseDrop.services;
 
+import com.bedatasolutions.leaseDrop.dao.PermissionDao;
 import com.bedatasolutions.leaseDrop.dao.RolesDao;
+import com.bedatasolutions.leaseDrop.dao.UserDao;
 import com.bedatasolutions.leaseDrop.dto.RoleDto;
 import com.bedatasolutions.leaseDrop.repo.PermissionRepo;
 import com.bedatasolutions.leaseDrop.repo.RolesRepo;
+import com.bedatasolutions.leaseDrop.repo.UserRepo;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +30,10 @@ public class RoleService {
 
     @Autowired
     private final RolesRepo rolesRepo;
+    @Autowired
+    private UserRepo userRepo;
+    @Autowired
+    private PermissionRepo permissionRepo;
 
     public RoleService(RolesRepo rolesRepo) {
         this.rolesRepo = rolesRepo;
@@ -95,33 +103,61 @@ public class RoleService {
         return new RoleDto(
                 rolesDao.getId(),
                 rolesDao.getVersion(),
-//                rolesDao.getActionType(),
-//                rolesDao.getUserMod(),
-//                rolesDao.getUserAdded(),
                 rolesDao.getName(),
-                rolesDao.getDescription(),
-                rolesDao.getPermissions(),
-                rolesDao.getUsers()
+                rolesDao.getDescription()
         );
     }
 
     public RolesDao dtoToDao(RoleDto roleDto, RolesDao rolesDao) {
 
-//        permissionDao.setActionKey(ActionType.UPDATE);
-//        permissionDao.setActionType(ActionType.UPDATE);
-
 
         rolesDao.setId(roleDto.id());
         rolesDao.setVersion(roleDto.version());
-//        rolesDao.setActionType(roleDto.actionType());
-//        rolesDao.setUserMod(roleDto.userMod());
-//        rolesDao.setUserAdded(roleDto.userAdded());
         rolesDao.setName(roleDto.name());
         rolesDao.setDescription(roleDto.description());
-        rolesDao.setPermissions(roleDto.permissions());
-        rolesDao.setUsers(roleDto.users());
-//        permissionDao.setDescription(permissionDto.description() != null ? permissionDto.description() : permissionDao.getDescription());
         return rolesDao;
     }
+
+/*
+
+    public RoleDto daoToDto(RolesDao rolesDao) {
+        return new RoleDto(
+                rolesDao.getId(),
+                rolesDao.getVersion(),
+                rolesDao.getName(),
+                rolesDao.getDescription(),
+                rolesDao.getPermissions() != null ?
+                        rolesDao.getPermissions().stream().map(this::daoToDto).collect(Collectors.toSet()) : null,
+                rolesDao.getUsers() != null ?
+                        rolesDao.getUsers().stream().map(this::daoToDto).collect(Collectors.toSet()) : null
+        );
+    }
+
+
+    // updated
+    public RolesDao dtoToDao(RoleDto roleDto, RolesDao rolesDao) {
+        rolesDao.setId(roleDto.id());
+        rolesDao.setVersion(roleDto.version());
+        rolesDao.setName(roleDto.name());
+        rolesDao.setDescription(roleDto.description());
+
+        if (roleDto.permissions() != null) {
+            Set<PermissionDao> permissions = roleDto.permissions().stream()
+                    .map(permissionDto -> permissionRepo.findById(permissionDto.getId())
+                            .orElseThrow(() -> new RuntimeException("Permission not found with id: " + permissionDto.getId())))
+                    .collect(Collectors.toSet());
+            rolesDao.setPermissions(permissions);
+        }
+
+        if (roleDto.users() != null) {
+            Set<UserDao> users = roleDto.users().stream()
+                    .map(userDto -> userRepo.findById(userDto.id())
+                            .orElseThrow(() -> new RuntimeException("User not found with id: " + userDto.id())))
+                    .collect(Collectors.toSet());
+            rolesDao.setUsers(users);
+        }
+
+        return rolesDao;
+    }*/
 
 }

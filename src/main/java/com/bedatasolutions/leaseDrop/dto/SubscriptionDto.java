@@ -7,8 +7,8 @@ public record SubscriptionDto(
         Integer documentLimit,
         String stripeCustomerId,
         String stripeSubscriptionId,
-        String status
-        //Integer userId
+        String status,
+        Integer userId
 ) {
 
 

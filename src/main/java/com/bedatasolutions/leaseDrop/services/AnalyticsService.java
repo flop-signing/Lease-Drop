@@ -65,7 +65,9 @@ public class AnalyticsService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Analytics Setting not found with id: " + analyticsDto.id());
         }
 
+        existingAnalytics.setActionKey(ActionType.UPDATE);
         AnalyticsDao updatedAnalytics=analyticsRepo.save(dtoToDao(analyticsDto,existingAnalytics));
+
         return daoToDto(updatedAnalytics);
 
 
@@ -78,6 +80,7 @@ public class AnalyticsService {
     public void delete(Integer id) {
         AnalyticsDao analyticsDao = analyticsRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Analytics not found"));
+        analyticsDao.setActionKey(ActionType.DELETE);
         analyticsRepo.delete(analyticsDao); // Delete the analytics record
     }
 
@@ -86,8 +89,8 @@ public class AnalyticsService {
         return new AnalyticsDto(
                 analyticsDao.getId(),
                 analyticsDao.getVersion(),
-                analyticsDao.getData()
-
+                analyticsDao.getData(),
+                analyticsDao.getUsers().getId() //FK
         );
     }
 
@@ -96,6 +99,7 @@ public class AnalyticsService {
         analyticsDao.setId(analyticsDto.id());
         analyticsDao.setVersion(analyticsDto.version());
         analyticsDao.setData(analyticsDto.data());
+        //analyticsDao.setUsers();
 
         return analyticsDao;
     }

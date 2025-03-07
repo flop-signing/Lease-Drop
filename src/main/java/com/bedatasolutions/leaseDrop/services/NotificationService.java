@@ -2,8 +2,10 @@ package com.bedatasolutions.leaseDrop.services;
 
 import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.dao.NotificationDao;
+import com.bedatasolutions.leaseDrop.dao.UserDao;
 import com.bedatasolutions.leaseDrop.dto.NotificationDto;
 import com.bedatasolutions.leaseDrop.repo.NotificationRepo;
+import com.bedatasolutions.leaseDrop.repo.UserRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,9 +19,12 @@ import java.util.stream.Collectors;
 public class NotificationService {
     private final NotificationRepo notificationRepo;
 
+    private final UserRepo userRepo;
+
     // Constructor-based dependency injection for the repository
-    public NotificationService(NotificationRepo notificationRepo) {
+    public NotificationService(NotificationRepo notificationRepo,UserRepo userRepo) {
         this.notificationRepo = notificationRepo;
+        this.userRepo = userRepo;
     }
 
     // Method to get all notifications
@@ -58,6 +63,8 @@ public class NotificationService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found with id: " + notificationDto.id());
         }
 
+        existingNotification.setActionKey(ActionType.UPDATE);
+
         // Save updated notification back to the database
         NotificationDao updatedNotification = notificationRepo.save(dtoToDao(notificationDto,existingNotification));
         return daoToDto(updatedNotification); // Return the updated notification as DTO
@@ -69,6 +76,7 @@ public class NotificationService {
     public void delete(Integer id) {
         NotificationDao notificationDao = notificationRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
+        notificationDao.setActionKey(ActionType.DELETE);
         notificationRepo.delete(notificationDao); // Delete the notification
     }
 
@@ -81,7 +89,8 @@ public class NotificationService {
                 notificationDao.getChannel(),
                 notificationDao.getSubject(),
                 notificationDao.getSender(),
-                notificationDao.getSenderEmail()
+                notificationDao.getSenderEmail(),
+                notificationDao.getUsers().getId()
         );
     }
 
@@ -94,6 +103,11 @@ public class NotificationService {
         notificationDao.setSubject(notificationDto.subject());
         notificationDao.setSender(notificationDto.sender());
         notificationDao.setSenderEmail(notificationDto.senderEmail());
+
+        UserDao user = userRepo.findById(notificationDto.userId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + notificationDto.userId()));
+
+        notificationDao.setUsers(user);
 
         return notificationDao;
     }

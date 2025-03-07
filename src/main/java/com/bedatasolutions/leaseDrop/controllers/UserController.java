@@ -41,14 +41,14 @@ public class UserController {
 
     // Endpoint to create a new user
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@RequestBody UserDto userDto) {
+    public ResponseEntity<UserDto> create(@RequestBody UserDto userDto) {
         UserDto createdUser = userService.create(userDto);  // Create user
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);  // Return the created user with HTTP 201
     }
 
     // Endpoint to update an existing user
     @PutMapping()
-    public ResponseEntity<UserDto> updateUser( @RequestBody UserDto userDto) {
+    public ResponseEntity<UserDto> update( @RequestBody UserDto userDto) {
         try {
             UserDto updatedUser = userService.update(userDto);  // Update user
             return new ResponseEntity<>(updatedUser, HttpStatus.OK);
@@ -59,7 +59,7 @@ public class UserController {
 
     // Endpoint to delete a user by ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
         try {
             userService.delete(id);  // Delete user
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);  // Return 204 (No Content)

@@ -76,33 +76,34 @@ public class UserService {
 
 
 
-
     public UserDto daoToDto(UserDao userDao) {
         return new UserDto(
                 userDao.getId(),
                 userDao.getVersion(),
-             //   userDao.getRoleId(),
                 userDao.getLdapUid(),
                 userDao.getPasswordHash(),
                 userDao.getEmail(),
-                userDao.getUsername()
-
+                userDao.getUsername(),
+                userDao.getFirstName(),
+                userDao.getLastName(),
+                userDao.getCompanyEmail(),
+                userDao.getContactNumber(),
+                userDao.getAddress()
 
         );
     }
     public UserDao dtoToDao(UserDto userDto, UserDao userDao) {
-
-//        permissionDao.setActionKey(ActionType.UPDATE);
-//        permissionDao.setActionType(ActionType.UPDATE);
-
-
         userDao.setId(userDto.id());
         userDao.setVersion(userDto.version());
-        //userDao.setRoleId(userDto.roleId());
         userDao.setLdapUid(userDto.ldapUid());
         userDao.setPasswordHash(userDto.passwordHash());
         userDao.setEmail(userDto.email());
         userDao.setUsername(userDto.username());
+        userDao.setFirstName(userDto.firstName());
+        userDao.setLastName(userDto.lastName());
+        userDao.setCompanyEmail(userDto.companyEmail());
+        userDao.setContactNumber(userDto.contactNumber());
+        userDao.setAddress(userDto.address());
 
         return userDao;
     }

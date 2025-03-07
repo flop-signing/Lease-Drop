@@ -9,7 +9,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "T_DOCUMENT_SUMMARIES")
-public class DocumentSummaryDao extends AuditableEntity {
+public class
+DocumentSummaryDao extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,7 +18,7 @@ public class DocumentSummaryDao extends AuditableEntity {
     private Integer id;
 
     @Column(name = "id_document_summaries_ver")
-//    @Version
+    @Version
     private Integer version;
 
     @Column(name = "tx_summary", nullable = false)

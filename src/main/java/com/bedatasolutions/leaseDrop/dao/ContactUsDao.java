@@ -1,7 +1,6 @@
 package com.bedatasolutions.leaseDrop.dao;
 
 import com.bedatasolutions.leaseDrop.dao.abstracts.AuditableEntity;
-import com.bedatasolutions.leaseDrop.dto.UserDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +34,12 @@ public class ContactUsDao extends AuditableEntity {
 
     @Column(name = "tx_message")
     private String message;
+
+    @Column(name = "tx_status")
+    private String status;
+
+    @Column(name = "is_response")
+    private Boolean response;
 
     @ManyToOne
     @JoinColumn(name = "id_users_key",referencedColumnName = "id_users_key")

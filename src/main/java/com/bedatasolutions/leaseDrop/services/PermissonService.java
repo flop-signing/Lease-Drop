@@ -66,12 +66,7 @@ public class PermissonService {
     public PermissionDto daoToDto(PermissionDao permissionDao) {
         return new PermissionDto(
                 permissionDao.getId(),
-                permissionDao.getRoles(),
-//                !permissionDao.getRoles().isEmpty() ? permissionDao.getRoles() : Collections.emptySet(),
                 permissionDao.getVersion(),
-           //     permissionDao.getActionKey(),
-//                permissionDao.getUserMod(),
-//                permissionDao.getUserAdded(),
                 permissionDao.getName(),
                 permissionDao.getDescription()
 
@@ -81,14 +76,7 @@ public class PermissonService {
     public PermissionDao dtoToDao(PermissionDto permissionDto, PermissionDao permissionDao) {
 
         permissionDao.setVersion(permissionDto.version());
-//        permissionDao.setActionKey(ActionType.UPDATE);
-//        permissionDao.setActionType(ActionType.UPDATE);
-//
-//        permissionDao.setUserMod(permissionDto.userMod());
-//        permissionDao.setUserAdded(permissionDto.userAdded());
         permissionDao.setName(permissionDto.name());
-//        permissionDao.setDescription(permissionDto.description() != null ? permissionDto.description() : permissionDao.getDescription());
-
         permissionDao.setDescription(permissionDto.description());
         return permissionDao;
     }

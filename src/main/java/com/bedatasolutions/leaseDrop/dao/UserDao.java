@@ -30,7 +30,7 @@ public class UserDao extends AuditableEntity {
     @Column(name = "tx_ldap_uid", unique = true, nullable = false)
     private String ldapUid;
 
-    @Column(name = "tx_password_hash", nullable = false)
+    @Column(name = "tx_password_hash")
     private String passwordHash;
 
     @Column(name = "tx_email", unique = true, nullable = false)
@@ -38,6 +38,21 @@ public class UserDao extends AuditableEntity {
 
     @Column(name = "tx_username", unique = true, nullable = false)
     private String username;
+
+    @Column(name = "tx_first_name")
+    private String firstName;
+
+    @Column(name = "tx_last_name")
+    private String lastName;
+
+    @Column(name = "tx_company_email")
+    private String companyEmail;
+
+    @Column(name = "tx_contact_number")
+    private String contactNumber;
+
+    @Column(name = "tx_address")
+    private String address;
 
 //    // One User can have many Analytics
 //    @OneToMany(mappedBy = "users",cascade = CascadeType.ALL,fetch = FetchType.LAZY)

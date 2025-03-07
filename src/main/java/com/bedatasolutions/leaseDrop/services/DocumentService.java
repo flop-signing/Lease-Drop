@@ -2,8 +2,12 @@ package com.bedatasolutions.leaseDrop.services;
 
 import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.dao.DocumentDao;
+import com.bedatasolutions.leaseDrop.dao.DocumentSummaryDao;
+import com.bedatasolutions.leaseDrop.dao.UserDao;
 import com.bedatasolutions.leaseDrop.dto.DocumentDto;
+import com.bedatasolutions.leaseDrop.dto.DocumentSummaryDto;
 import com.bedatasolutions.leaseDrop.repo.DocumentRepo;
+import com.bedatasolutions.leaseDrop.repo.UserRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,10 +21,13 @@ import java.util.stream.Collectors;
 public class DocumentService {
 
     private final DocumentRepo documentRepo;
+    //private final UserDao userDao;
+    private final UserRepo userRepo;
 
     // Constructor-based dependency injection for the repository
-    public DocumentService(DocumentRepo documentRepo) {
+    public DocumentService(DocumentRepo documentRepo,UserRepo userRepo) {
         this.documentRepo = documentRepo;
+        this.userRepo = userRepo;
     }
 
 
@@ -62,7 +69,7 @@ public class DocumentService {
         if (existingDocument.getId() == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found with id: " + documentDto.id());
         }
-
+        existingDocument.setActionKey(ActionType.UPDATE);
         DocumentDao updatedDocument=documentRepo.save(dtoToDao(documentDto,existingDocument));
         return daoToDto(updatedDocument);
     }
@@ -74,15 +81,20 @@ public class DocumentService {
     public void delete(Integer id) {
         DocumentDao documentDao = documentRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
+        documentDao.setActionKey(ActionType.DELETE);
         documentRepo.delete(documentDao); // Delete the document
     }
 
 
     public DocumentDto daoToDto(DocumentDao documentDao) {
+
         return new DocumentDto(
                 documentDao.getId(),
                 documentDao.getVersion(),
-                documentDao.getFilePath()
+                documentDao.getFilePath(),
+                documentDao.getUsers() != null ? documentDao.getUsers().getId() : null// Avoids NullPointerException
+//                documentDao.getDocumentSummary() != null ?
+//                        documentDao.getDocumentSummary().stream().map(this::daoToDtoSummary).collect(Collectors.toList()) : null
         );
     }
 
@@ -91,8 +103,25 @@ public class DocumentService {
         documentDao.setId(documentDto.id());
         documentDao.setVersion(documentDto.version());
         documentDao.setFilePath(documentDto.filePath());
+        UserDao user = userRepo.findById(documentDto.userId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + documentDto.userId()));
+
+        documentDao.setUsers(user);
+
+
         return documentDao;
     }
+
+//    private DocumentSummaryDto daoToDtoSummary(DocumentSummaryDao documentSummaryDao) {
+//        return new DocumentSummaryDto(
+//                documentSummaryDao.getId(),
+//                documentSummaryDao.getVersion(),
+//                documentSummaryDao.getSummary(),
+//                documentSummaryDao.getMetaData(),
+//                documentSummaryDao.getDocuments().getId()
+//                // Add more fields if needed
+//        );
+//    }
 
 
 }

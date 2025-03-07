@@ -2,8 +2,10 @@ package com.bedatasolutions.leaseDrop.services;
 
 import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.dao.SubscriptionDao;
+import com.bedatasolutions.leaseDrop.dao.UserDao;
 import com.bedatasolutions.leaseDrop.dto.SubscriptionDto;
 import com.bedatasolutions.leaseDrop.repo.SubscriptionRepo;
+import com.bedatasolutions.leaseDrop.repo.UserRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,10 +19,12 @@ import java.util.stream.Collectors;
 public class SubscriptionService {
 
     private final SubscriptionRepo subscriptionRepo;
+    private final UserRepo userRepo;
 
     // Constructor-based dependency injection for the repository
-    public SubscriptionService(SubscriptionRepo subscriptionRepo) {
+    public SubscriptionService(SubscriptionRepo subscriptionRepo,UserRepo userRepo) {
         this.subscriptionRepo = subscriptionRepo;
+        this.userRepo = userRepo;
     }
 
     // Method to get all subscriptions
@@ -60,6 +64,8 @@ public class SubscriptionService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found with id: " +subscriptionDto.id());
         }
 
+        existingSubscription.setActionKey(ActionType.UPDATE);
+
         // Save updated subscription back to the database
         SubscriptionDao updatedSubscription = subscriptionRepo.save(dtoToDao(subscriptionDto, existingSubscription));
         return daoToDto(updatedSubscription); // Return the updated subscription as DTO
@@ -70,6 +76,8 @@ public class SubscriptionService {
     public void delete(Integer id) {
         SubscriptionDao subscriptionDao = subscriptionRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
+
+        subscriptionDao.setActionKey(ActionType.DELETE);
         subscriptionRepo.delete(subscriptionDao); // Delete the subscription
     }
 
@@ -82,7 +90,8 @@ public class SubscriptionService {
                 subscriptionDao.getDocumentLimit(),
                 subscriptionDao.getStripeCustomerId(),
                 subscriptionDao.getStripeSubscriptionId(),
-                subscriptionDao.getStatus()
+                subscriptionDao.getStatus(),
+                subscriptionDao.getUsers().getId()
 
         );
     }
@@ -102,6 +111,10 @@ public class SubscriptionService {
         subscriptionDao.setStripeSubscriptionId(subscriptionDto.stripeSubscriptionId());
 
         subscriptionDao.setStatus(subscriptionDto.status());
+        UserDao user = userRepo.findById(subscriptionDto.userId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + subscriptionDto.userId()));
+
+        subscriptionDao.setUsers(user);
         return subscriptionDao;
     }
 

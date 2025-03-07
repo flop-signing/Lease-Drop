@@ -10,12 +10,7 @@ import java.util.Set;
 public record PermissionDto(
 
         Integer id,
-//
-        Set<RolesDao> roles,
         Integer version,
-   //     ActionType actionType,
-//        Integer userMod,
-//        Integer userAdded,
 
         @Size(min = 3, max = 10, message = "Invalid input : name")
         @Schema(title = "Permission name", example = "PERMISSION_WRITE", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
@@ -25,5 +20,7 @@ public record PermissionDto(
 //        @NotNull(message = "Null entry")
 //        @Size(min = 5, message = "Minimum 5")
 //        @Schema(title = "Permission description", example = "this is permission description", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-        String description) {
+        String description
+    //    Set<RolesDao> roles
+        ) {
 }

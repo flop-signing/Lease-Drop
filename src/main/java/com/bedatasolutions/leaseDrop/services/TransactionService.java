@@ -6,7 +6,9 @@ import com.bedatasolutions.leaseDrop.dao.TransactionDao;
 import com.bedatasolutions.leaseDrop.dao.UserDao;
 import com.bedatasolutions.leaseDrop.dto.TransactionDto;
 import com.bedatasolutions.leaseDrop.repo.TransactionRepo;
+import com.bedatasolutions.leaseDrop.repo.UserRepo;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,10 +21,13 @@ import java.util.stream.Collectors;
 public class TransactionService {
 
     private final TransactionRepo transactionRepository;
+    private final UserRepo userRepo;
 
     // Constructor-based dependency injection for the repository
-    public TransactionService(TransactionRepo transactionRepository) {
+
+    public TransactionService(TransactionRepo transactionRepository,UserRepo userRepo) {
         this.transactionRepository = transactionRepository;
+        this.userRepo = userRepo;
     }
 
     // Method to get all transactions
@@ -60,6 +65,7 @@ public class TransactionService {
         if (existingTransaction.getId() == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found with id: " +transactionDto.id());
         }
+        existingTransaction.setActionKey(ActionType.UPDATE);
 
 
         // Save updated transaction back to the database
@@ -72,6 +78,8 @@ public class TransactionService {
     public void delete(Integer transactionId) {
         TransactionDao transactionDao = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        transactionDao.setActionKey(ActionType.DELETE);
         transactionRepository.delete(transactionDao); // Delete the transaction
     }
 
@@ -82,7 +90,8 @@ public class TransactionService {
                 transactionDao.getId(),
                 transactionDao.getVersion(),
                 transactionDao.getTransactionType(),
-                transactionDao.getDetails()
+                transactionDao.getDetails(),
+                transactionDao.getUsers().getId()
 
         );
     }
@@ -96,6 +105,12 @@ public class TransactionService {
         transactionDao.setVersion(transactionDto.version());
         transactionDao.setTransactionType(transactionDto.transactionType());
         transactionDao.setDetails(transactionDto.details());
+
+        UserDao user = userRepo.findById(transactionDto.userId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + transactionDto.userId()));
+
+        transactionDao.setUsers(user);
+
 
         return transactionDao;
     }

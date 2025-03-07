@@ -4,8 +4,8 @@ public record TransactionDto(
         Integer id,
         Integer version,
         String transactionType,
-        String details
-       // Integer userId
+        String details,
+        Integer userId
 
 ) {
 }

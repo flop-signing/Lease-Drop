@@ -80,9 +80,6 @@ public class SoftwareConfigurationService {
         return new SoftwareConfigurationDto(
                 softwareConfigurationDao.getId(),
                 softwareConfigurationDao.getVersion(),
-      //          softwareConfigurationDao.getActionKey(),
-//                softwareConfigurationDao.getUserMod(),
-//                softwareConfigurationDao.getUserAdded(),
                 softwareConfigurationDao.getConfigKey(),
                 softwareConfigurationDao.getConfigValue()
 
@@ -93,15 +90,8 @@ public class SoftwareConfigurationService {
 
     public SoftwareConfigurationDao dtoToDao(SoftwareConfigurationDto softwareConfigurationDto, SoftwareConfigurationDao softwareConfigurationDao) {
 
-//        permissionDao.setActionKey(ActionType.UPDATE);
-//        permissionDao.setActionType(ActionType.UPDATE);
-
-
         softwareConfigurationDao.setId(softwareConfigurationDto.id());
         softwareConfigurationDao.setVersion(softwareConfigurationDto.version());
-//        softwareConfigurationDao.setActionKey(softwareConfigurationDto.actionType());
-//        softwareConfigurationDao.setUserMod(softwareConfigurationDto.userMod());
-//        softwareConfigurationDao.setUserAdded(softwareConfigurationDto.userAdded());
         softwareConfigurationDao.setConfigKey(softwareConfigurationDto.configKey());
         softwareConfigurationDao.setConfigValue(softwareConfigurationDto.configValue());
         return softwareConfigurationDao;
