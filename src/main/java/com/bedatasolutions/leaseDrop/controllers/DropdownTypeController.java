@@ -43,7 +43,7 @@ public class DropdownTypeController {
 
     // Create Dropdown Type
     @PostMapping
-    public ResponseEntity<DropdownTypeDto> createDropdownType(@RequestBody DropdownTypeDto dropdownTypeDto) {
+    public ResponseEntity<DropdownTypeDto> create(@RequestBody DropdownTypeDto dropdownTypeDto) {
         DropdownTypeDto createdDropdownType = dropdownTypeService.create(dropdownTypeDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDropdownType);
     }
@@ -51,14 +51,14 @@ public class DropdownTypeController {
     // Update Dropdown Type
 
     @PutMapping()
-    public ResponseEntity<DropdownTypeDto> updateDropdownType(@RequestBody @Valid DropdownTypeDto dropdownTypeDto) {
+    public ResponseEntity<DropdownTypeDto> update(@RequestBody @Valid DropdownTypeDto dropdownTypeDto) {
         DropdownTypeDto updatedDropdownType = dropdownTypeService.update(dropdownTypeDto);
         return ResponseEntity.ok(updatedDropdownType);
     }
 
     // Delete Dropdown Type
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteDropdownType(@PathVariable Integer id) {
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
         dropdownTypeService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Dropdown Type deleted successfully");
     }

@@ -42,21 +42,21 @@ public class DocumentSummaryController {
 
     // Create Document Summary
     @PostMapping
-    public ResponseEntity<DocumentSummaryDto> createDocumentSummary(@RequestBody DocumentSummaryDto documentSummaryDto) {
+    public ResponseEntity<DocumentSummaryDto> create(@RequestBody DocumentSummaryDto documentSummaryDto) {
         DocumentSummaryDto createdDocumentSummary = documentSummaryService.create(documentSummaryDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDocumentSummary);
     }
 
     // Update Document Summary
     @PutMapping()
-    public ResponseEntity<DocumentSummaryDto> updateDocumentSummary( @RequestBody @Valid DocumentSummaryDto documentSummaryDto) {
+    public ResponseEntity<DocumentSummaryDto> update( @RequestBody @Valid DocumentSummaryDto documentSummaryDto) {
         DocumentSummaryDto updatedDocumentSummary = documentSummaryService.update(documentSummaryDto);
         return ResponseEntity.ok(updatedDocumentSummary);
     }
 
     // Delete Document Summary
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteDocumentSummary(@PathVariable Integer id) {
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
         documentSummaryService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Document Summary deleted successfully");
     }

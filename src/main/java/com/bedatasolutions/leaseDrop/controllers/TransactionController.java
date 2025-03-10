@@ -41,14 +41,14 @@ public class TransactionController {
 
     // Endpoint to create a new transaction
     @PostMapping
-    public ResponseEntity<TransactionDto> createTransaction(@RequestBody TransactionDto transactionDto) {
+    public ResponseEntity<TransactionDto> create(@RequestBody TransactionDto transactionDto) {
         TransactionDto createdTransaction = transactionService.create(transactionDto);  // Create transaction
         return new ResponseEntity<>(createdTransaction, HttpStatus.CREATED);  // Return the created transaction with HTTP 201
     }
 
     // Endpoint to update an existing transaction
     @PutMapping()
-    public ResponseEntity<TransactionDto> updateTransaction( @RequestBody TransactionDto transactionDto) {
+    public ResponseEntity<TransactionDto> update( @RequestBody TransactionDto transactionDto) {
         try {
             TransactionDto updatedTransaction = transactionService.update(transactionDto);  // Update transaction
             return new ResponseEntity<>(updatedTransaction, HttpStatus.OK);
@@ -59,7 +59,7 @@ public class TransactionController {
 
     // Endpoint to delete a transaction by ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTransaction(@PathVariable Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
         try {
             transactionService.delete(id);  // Delete transaction
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);  // Return 204 (No Content)

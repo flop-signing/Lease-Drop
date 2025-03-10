@@ -44,7 +44,7 @@ public class AdminSettingController {
 
     // Create Admin Setting
     @PostMapping
-    public ResponseEntity<AdminSettingDto> createAdminSetting(@RequestBody AdminSettingDto adminSettingDto) {
+    public ResponseEntity<AdminSettingDto> create(@RequestBody AdminSettingDto adminSettingDto) {
 
         AdminSettingDto createdAdminSetting = adminSettingService.create(adminSettingDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdAdminSetting);
@@ -53,7 +53,7 @@ public class AdminSettingController {
     // Update Admin Setting
     @Transactional
     @PutMapping()
-    public ResponseEntity<AdminSettingDto> updateAdminSetting(@RequestBody @Valid AdminSettingDto adminSettingDto) {
+    public ResponseEntity<AdminSettingDto> update(@RequestBody @Valid AdminSettingDto adminSettingDto) {
         System.out.println("id check " + adminSettingDto.id());
         AdminSettingDto updatedAdminSetting = adminSettingService.update(adminSettingDto);
         return ResponseEntity.ok(updatedAdminSetting);
@@ -62,7 +62,7 @@ public class AdminSettingController {
 
     // Delete Admin Setting
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteAdminSetting(@PathVariable Integer id) {
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
         adminSettingService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Admin setting deleted successfully");
     }

@@ -40,13 +40,13 @@ public class RoleController {
     }
     // Create Role
     @PostMapping
-    public ResponseEntity<RoleDto> createRole(@RequestBody RoleDto roleDto) {
+    public ResponseEntity<RoleDto> create(@RequestBody RoleDto roleDto) {
         RoleDto createdRole = roleService.create(roleDto);
         return ResponseEntity.ok(createdRole);
     }
     // Update Role
     @PutMapping
-    public ResponseEntity<RoleDto> updateRole(@RequestBody @Valid RoleDto roleDto) {
+    public ResponseEntity<RoleDto> update(@RequestBody @Valid RoleDto roleDto) {
         // Call service to update the role
         System.out.println("id check "+roleDto.id());
         RoleDto updatedRole = roleService.update(roleDto);
@@ -54,7 +54,7 @@ public class RoleController {
     }
     // Delete Role
     @DeleteMapping
-    public ResponseEntity<String> deleteRole(@RequestBody Integer roleIdDto) {
+    public ResponseEntity<String> delete(@RequestBody Integer roleIdDto) {
         roleService.delete(roleIdDto);  // Call the service to delete the role
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Role deleted successfully");
     }

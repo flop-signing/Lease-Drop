@@ -42,21 +42,21 @@ public class DocumentController {
 
     // Create Document
     @PostMapping
-    public ResponseEntity<DocumentDto> createDocument(@RequestBody DocumentDto documentDto) {
+    public ResponseEntity<DocumentDto> create(@RequestBody DocumentDto documentDto) {
         DocumentDto createdDocument = documentService.create(documentDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDocument);
     }
 
     // Update Document
     @PutMapping()
-    public ResponseEntity<DocumentDto> updateDocument(@RequestBody @Valid DocumentDto documentDto) {
+    public ResponseEntity<DocumentDto> update(@RequestBody @Valid DocumentDto documentDto) {
         DocumentDto updatedDocument = documentService.update(documentDto);
         return ResponseEntity.ok(updatedDocument);
     }
 
     // Delete Document
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteDocument(@PathVariable Integer id) {
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
         documentService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Document deleted successfully");
     }

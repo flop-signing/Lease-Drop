@@ -44,21 +44,21 @@ public class DropdownItemController {
 
     // Create Dropdown Item
     @PostMapping()
-    public ResponseEntity<DropdownItemDto> createDropdownItem(@RequestBody DropdownItemDto dropdownItemDto) {
+    public ResponseEntity<DropdownItemDto> create(@RequestBody DropdownItemDto dropdownItemDto) {
         DropdownItemDto createdDropdownItem = dropdownItemService.create(dropdownItemDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDropdownItem);
     }
 
     // Update Dropdown Item
     @PutMapping()
-    public ResponseEntity<DropdownItemDto> updateDropdownItem( @RequestBody @Valid DropdownItemDto dropdownItemDto) {
+    public ResponseEntity<DropdownItemDto> update( @RequestBody @Valid DropdownItemDto dropdownItemDto) {
         DropdownItemDto updatedDropdownItem = dropdownItemService.update(dropdownItemDto);
         return ResponseEntity.ok(updatedDropdownItem);
     }
 
     // Delete Dropdown Item
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteDropdownItem(@PathVariable Integer id) {
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
         dropdownItemService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Dropdown Item deleted successfully");
     }

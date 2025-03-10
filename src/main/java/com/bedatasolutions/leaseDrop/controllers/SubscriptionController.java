@@ -41,21 +41,21 @@ public class SubscriptionController {
 
     // Create Subscription
     @PostMapping
-    public ResponseEntity<SubscriptionDto> createSubscription(@RequestBody @Valid SubscriptionDto subscriptionDto) {
+    public ResponseEntity<SubscriptionDto> create(@RequestBody @Valid SubscriptionDto subscriptionDto) {
         SubscriptionDto createdSubscription = subscriptionService.create(subscriptionDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSubscription);
     }
 
     // Update Subscription
     @PutMapping()
-    public ResponseEntity<SubscriptionDto> updateSubscription( @RequestBody @Valid SubscriptionDto subscriptionDto) {
+    public ResponseEntity<SubscriptionDto> update( @RequestBody @Valid SubscriptionDto subscriptionDto) {
         SubscriptionDto updatedSubscription = subscriptionService.update(subscriptionDto);
         return ResponseEntity.ok(updatedSubscription);
     }
 
     // Delete Subscription
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteSubscription(@PathVariable Integer id) {
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
         subscriptionService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Subscription deleted successfully");
     }

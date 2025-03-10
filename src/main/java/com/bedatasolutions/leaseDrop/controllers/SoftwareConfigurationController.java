@@ -45,7 +45,7 @@ public class SoftwareConfigurationController {
     // Create Software Configuration
 
     @PostMapping
-    public ResponseEntity<SoftwareConfigurationDto> createSoftwareConfiguration(@RequestBody @Valid SoftwareConfigurationDto softwareConfigurationDto) {
+    public ResponseEntity<SoftwareConfigurationDto> create(@RequestBody @Valid SoftwareConfigurationDto softwareConfigurationDto) {
         SoftwareConfigurationDto createdConfiguration = softwareConfigurationService.create(softwareConfigurationDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdConfiguration);
     }
@@ -53,7 +53,7 @@ public class SoftwareConfigurationController {
     // Update Software Configuration
 
     @PutMapping()
-    public ResponseEntity<SoftwareConfigurationDto> updateSoftwareConfiguration( @RequestBody @Valid SoftwareConfigurationDto softwareConfigurationDto) {
+    public ResponseEntity<SoftwareConfigurationDto> update( @RequestBody @Valid SoftwareConfigurationDto softwareConfigurationDto) {
         SoftwareConfigurationDto updatedConfiguration = softwareConfigurationService.update( softwareConfigurationDto);
         return ResponseEntity.ok(updatedConfiguration);
     }
@@ -61,7 +61,7 @@ public class SoftwareConfigurationController {
     // Delete Software Configuration
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteSoftwareConfiguration(@PathVariable Integer id) {
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
         softwareConfigurationService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Software Configuration deleted successfully");
     }
