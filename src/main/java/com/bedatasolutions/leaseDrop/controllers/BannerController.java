@@ -1,5 +1,6 @@
 package com.bedatasolutions.leaseDrop.controllers;
 
+import com.bedatasolutions.leaseDrop.config.file.FilePath;
 import com.bedatasolutions.leaseDrop.config.file.ThumbnailVariant;
 import com.bedatasolutions.leaseDrop.dao.BannerDao;
 import com.bedatasolutions.leaseDrop.dto.BannerDto;
@@ -17,8 +18,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+
+import static com.bedatasolutions.leaseDrop.config.file.MultipartFileUtils.urlEncode;
 
 
 @RestController
@@ -53,8 +61,6 @@ public class BannerController {
     }
 
 
-
-
     @GetMapping(value = "/images", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<Resource> getImage(@RequestParam String type, @RequestParam String path) {
         try {
@@ -72,11 +78,14 @@ public class BannerController {
         }
     }
 
-    public ResponseEntity<ImageWithBannerResponse> getRandomImage(@RequestParam(value = "type", required = false) String fileType) {
+
+    @CrossOrigin(origins = "*")
+    @GetMapping("/random-image")
+    public ResponseEntity<Map<String, Object>> getRandomImage(@RequestParam(value = "type", required = false) String fileType) {
         try {
             // If fileType is null or invalid, set it to "L"
             if (fileType == null || !isValidFileType(fileType)) {
-                fileType = "L"; // Default value
+                fileType = "O"; // Default value
             }
 
             // Retrieve a random banner from the service
@@ -84,14 +93,29 @@ public class BannerController {
 
             // If a random banner is found
             if (randomBanner != null) {
-                // Retrieve the file path from the banner
-                String filePath = randomBanner.getFilePath();
+                // Retrieve the file path from the banner (already Base64 encoded)
+                String encodedFilePath = randomBanner.getFilePath();
 
-                // Call the getImage() method to get the image (it already returns ResponseEntity<Resource>)
-                ResponseEntity<Resource> imageResponse = getImage(fileType, filePath);
+          /*  // Decode the Base64 file path to get the original path
+            String decodedFilePath = new String(Base64.getDecoder().decode(encodedFilePath), StandardCharsets.UTF_8);
 
-                // Return a custom response with both the BannerDao, image, and duration
-                return ResponseEntity.ok(new ImageWithBannerResponse(randomBanner, imageResponse.getBody()));
+            // Construct the full file path safely
+            String filePathEE = Path.of(decodedFilePath).toString();
+
+            // URL encode the decoded file path before passing it
+            String encodedFilePathForUrl = urlEncode(filePathEE);*/
+
+                // Generate image URL using the same method as in getAllImages()
+                String imgUrl = MvcUriComponentsBuilder.fromMethodName(
+                        BannerController.class, "getImage", fileType, encodedFilePath
+                ).build().toString();
+
+                // Create response object with image URL and duration
+                Map<String, Object> response = new HashMap<>();
+                response.put("url", imgUrl);
+                response.put("duration", randomBanner.getDuration());
+
+                return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // No banner found
             }
@@ -102,16 +126,12 @@ public class BannerController {
     }
 
 
-
     // Method to validate if the fileType is valid
     private boolean isValidFileType(String fileType) {
         return fileType.equals(ThumbnailVariant.L.name()) ||
                 fileType.equals(ThumbnailVariant.M.name()) ||
                 fileType.equals(ThumbnailVariant.O.name());
     }
-
-
-    // Update a banner (PUT request)
 
 
     // Update banner (PUT request)
@@ -137,9 +157,6 @@ public class BannerController {
     }
 
 
-
-
-
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAllImages(
             @RequestParam(defaultValue = "0") int page,
@@ -153,8 +170,6 @@ public class BannerController {
             return new ResponseEntity<>("Error retrieving images", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 
 
 }
