@@ -149,7 +149,7 @@ public class BannerController {
         }
     }
 
-
+    @CrossOrigin(origins = "*")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAllImages(
             @RequestParam(required = false) Integer page,
@@ -164,7 +164,6 @@ public class BannerController {
             return new ResponseEntity<>("Error retrieving images", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
 
 }
