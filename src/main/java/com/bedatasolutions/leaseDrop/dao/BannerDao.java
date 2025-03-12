@@ -20,20 +20,24 @@ public class BannerDao extends AuditableEntity {
     @Column(name = "id_banners_ver")
     private Integer version;
 
-    @Column(name = "tx_title")
-    private String title;
-
-    @Column(name = "tx_size")
-    private String size;// Size of the image
-
-    @Column(name = "tx_file_path")
-    private String filePath;
-
-//    @Column(name = "dtt_upload_date")
-//    private LocalDateTime uploadDate;
 
     @Column(name="id_duration")
     private Integer duration;  // Duration for the image in sec
+
+    @Column(name="tx_file_path")
+    private String filePath;
+
+    @Column(name = "tx_file_type")
+    private String fileType;
+
+//    @Column(name="tx_image_url")
+//    private String imageUrl;
+
+    @Column(name = "tx_file_name")
+    private String fileName;
+
+    @Column(name = "tx_file_size")
+    private String fileSize;
 
 
 }
