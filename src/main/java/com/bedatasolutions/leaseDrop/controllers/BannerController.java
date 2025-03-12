@@ -1,13 +1,11 @@
 package com.bedatasolutions.leaseDrop.controllers;
 
-import com.bedatasolutions.leaseDrop.config.file.FilePath;
 import com.bedatasolutions.leaseDrop.config.file.ThumbnailVariant;
 import com.bedatasolutions.leaseDrop.dao.BannerDao;
 import com.bedatasolutions.leaseDrop.dto.BannerDto;
 import com.bedatasolutions.leaseDrop.dto.FileResponseDto;
 import com.bedatasolutions.leaseDrop.services.FileService;
 import com.bedatasolutions.leaseDrop.utils.ApiResponse;
-import com.bedatasolutions.leaseDrop.utils.ImageWithBannerResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.bedatasolutions.leaseDrop.config.file.MultipartFileUtils.urlEncode;
 
 
 @RestController
@@ -159,17 +152,19 @@ public class BannerController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAllImages(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String field,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String field,
+            @RequestParam(required = false) String direction) {
         try {
+            // Pass parameters to service layer, where default values are handled
             Map<String, Object> result = fileService.getAllImages(page, size, field, direction);
             return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error retrieving images", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
 
 }

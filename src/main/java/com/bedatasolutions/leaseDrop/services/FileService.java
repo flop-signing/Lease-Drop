@@ -87,11 +87,11 @@ public class FileService {
 
 
     public Map<String, Object> getAllImages(Integer page, Integer size, String field, String direction) throws Exception {
-        // Handle null and invalid input values
+        // Handle null and invalid input values, set defaults if necessary
         if (page == null || page < 1) page = 1; // Default to page 1
         if (size == null || size <= 0) size = 10; // Default to size 10
-        if (field == null || field.trim().isEmpty()) field = "fileName"; // Default to `fileName`
-        if (direction == null || direction.trim().isEmpty()) direction = "desc"; // Default to "desc"
+        if (field == null || field.trim().isEmpty()) field = "id"; // Default to `id` for sorting
+        if (direction == null || direction.trim().isEmpty()) direction = "desc"; // Default to "desc" for sorting
 
         // Convert `field` to lowercase to handle case insensitivity
         field = field.toLowerCase();
@@ -108,8 +108,11 @@ public class FileService {
             // Sorting by `fileSize` or `fileName` requires manual sorting (fetch all)
             banners = bannerRepo.findAll();
         } else {
-            // Use DATABASE SORTING for `fileName` & `createdAt`
-            String sortField = field.equals("filename") ? "tx_file_name" : field.equals("createdat") ? "createdAt" : "id";
+            // Use DATABASE SORTING for `fileName`, `createdAt`, and `id`
+            String sortField = field.equals("filename") ? "tx_file_name" :
+                    field.equals("createdat") ? "createdAt" :
+                            field.equals("id") ? "id" : field; // Ensure default is id
+
             banners = bannerRepo.findAll(Sort.by(sortDirection, sortField));
         }
 
@@ -189,9 +192,7 @@ public class FileService {
         return response;
     }
 
-    /**
-     * Extracts numeric file size from a string (e.g., "36 KB" -> 36).
-     */
+
     private int extractNumericSize(String sizeString) {
         if (sizeString == null || !sizeString.contains(" ")) return 0;
         try {
@@ -200,7 +201,6 @@ public class FileService {
             return 0; // Return 0 if parsing fails
         }
     }
-
 
     public Resource getImage(String type, String path) throws IOException {
         // Decode the URL-encoded file path from Base64
@@ -241,8 +241,6 @@ public class FileService {
     }
 
 
-
-
     @Transactional
     public String update(BannerDto bannerDto) {
         BannerDao existingBanner = bannerRepo.findById(bannerDto.id()).orElse(null);
@@ -273,107 +271,6 @@ public class FileService {
         }
     }
 
-
-
-    // Sorting
-
-    // Sorting Method
-/*
-    public List<FileInfoDto> getAllImagesWithSorting(String field,String direction) throws Exception {
-        // Retrieve all banner records from the database, sorted by the provided field
-        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
-        List<BannerDao> banners = bannerRepo.findAll(Sort.by(sortDirection, field));
-
-        // Initialize the list to hold the FileInfoDto objects
-        List<FileInfoDto> fileInfos = new ArrayList<>();
-
-        // Process each banner entry
-        for (BannerDao banner : banners) {
-            try {
-                // Check if the fileName is null or empty before proceeding
-                if (banner.getFileName() == null || banner.getFileName().isEmpty()) {
-                    log.warn("Skipping banner with ID: {} because the file name is null or empty", banner.getId());
-                    continue;  // Skip this banner and move to the next
-                }
-
-                // Construct the relative file path for accessing images
-                String filePathEE = Path.of(FilePath.USERS.get(), FilePath.USER_PHOTO.get(), banner.getFileName()).toString();
-
-                // Generate image URL with M variant (medium thumbnail)
-                String imgUrl = MvcUriComponentsBuilder.fromMethodName(
-                        BannerController.class, "getImage", ThumbnailVariant.M.name(), urlEncode(filePathEE)
-                ).build().toString();
-
-                // Create FileInfoDto with details from BannerDao
-                FileInfoDto fileInfo = new FileInfoDto(
-                        banner.getId(),
-                        imgUrl,
-                        banner.getFileName(),
-                        banner.getFileSize(),
-                        banner.getDuration(),
-                        banner.getCreatedAt() // Assuming you want to include createdAt for the image
-                );
-
-                fileInfos.add(fileInfo); // Add the FileInfoDto to the list
-            } catch (Exception e) {
-                log.error("Error processing banner with file name: {}", banner.getFileName(), e);
-            }
-        }
-
-        return fileInfos; // Return the list of FileInfoDto objects
-    }*/
-
-
-
-    // Pagination
-/*
-
-    public Page<FileInfoDto> getAllImagesWithPagination(int page, int size) throws Exception {
-        // Create a Pageable object for pagination (no sorting)
-        Pageable pageable = PageRequest.of(page, size);
-
-        // Retrieve a page of banner records from the database (no sorting)
-        Page<BannerDao> bannerPage = bannerRepo.findAll(pageable);
-
-        // Initialize the list to hold the FileInfoDto objects
-        List<FileInfoDto> fileInfos = new ArrayList<>();
-
-        // Process each banner entry in the page
-        for (BannerDao banner : bannerPage.getContent()) {
-            try {
-                // Check if the fileName is null or empty before proceeding
-                if (banner.getFileName() == null || banner.getFileName().isEmpty()) {
-        //            log.warn("Skipping banner with ID: {} because the file name is null or empty", banner.getId());
-                    continue;  // Skip this banner and move to the next
-                }
-
-                // Construct the relative file path for accessing images
-                String filePathEE = Path.of(FilePath.USERS.get(), FilePath.USER_PHOTO.get(), banner.getFileName()).toString();
-
-                // Generate image URL with M variant (medium thumbnail)
-                String imgUrl = MvcUriComponentsBuilder.fromMethodName(
-                        BannerController.class, "getImage", ThumbnailVariant.M.name(), urlEncode(filePathEE)
-                ).build().toString();
-
-                // Create FileInfoDto with details from BannerDao
-                FileInfoDto fileInfo = new FileInfoDto(
-                        banner.getId(),
-                        imgUrl,
-                        banner.getFileName(),
-                        banner.getFileSize(),
-                        banner.getDuration(),
-                        banner.getCreatedAt() // Assuming you want to include createdAt for the image
-                );
-
-                fileInfos.add(fileInfo); // Add the FileInfoDto to the list
-            } catch (Exception e) {
-                log.error("Error processing banner with file name: {}", banner.getFileName(), e);
-            }
-        }
-
-        // Return the Page of FileInfoDto objects
-        return new PageImpl<>(fileInfos, pageable, bannerPage.getTotalElements());
-    }*/
 
 
 }
