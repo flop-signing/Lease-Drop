@@ -3,23 +3,21 @@ package com.bedatasolutions.leaseDrop.controllers;
 import com.bedatasolutions.leaseDrop.config.file.ThumbnailVariant;
 import com.bedatasolutions.leaseDrop.dao.BannerDao;
 import com.bedatasolutions.leaseDrop.dto.BannerDto;
-import com.bedatasolutions.leaseDrop.dto.FileInfoDto;
 import com.bedatasolutions.leaseDrop.dto.FileResponseDto;
 import com.bedatasolutions.leaseDrop.services.FileService;
 import com.bedatasolutions.leaseDrop.utils.ApiResponse;
+import com.bedatasolutions.leaseDrop.utils.ImageWithBannerResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.Map;
 
 
@@ -55,14 +53,7 @@ public class BannerController {
     }
 
 
- /*   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getAllImages() {
-        try {
-            return new ResponseEntity<>(fileService.getAllImages(), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error retrieving images", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }*/
+
 
     @GetMapping(value = "/images", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<Resource> getImage(@RequestParam String type, @RequestParam String path) {
@@ -81,22 +72,12 @@ public class BannerController {
         }
     }
 
-
-    @GetMapping("/random-image")
-    public ResponseEntity<Resource> getRandomImage(@RequestParam("type") String fileType) {
+    public ResponseEntity<ImageWithBannerResponse> getRandomImage(@RequestParam(value = "type", required = false) String fileType) {
         try {
-
-            if(fileType==null)
-            {
-                fileType="L";
+            // If fileType is null or invalid, set it to "L"
+            if (fileType == null || !isValidFileType(fileType)) {
+                fileType = "L"; // Default value
             }
-            // Validate that the fileType is one of the acceptable values
-            if (!isValidFileType(fileType)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // Invalid fileType provided
-            }
-
-
-
 
             // Retrieve a random banner from the service
             BannerDao randomBanner = fileService.getRandomBanner();
@@ -109,8 +90,8 @@ public class BannerController {
                 // Call the getImage() method to get the image (it already returns ResponseEntity<Resource>)
                 ResponseEntity<Resource> imageResponse = getImage(fileType, filePath);
 
-                // Return the image response directly
-                return imageResponse;
+                // Return a custom response with both the BannerDao, image, and duration
+                return ResponseEntity.ok(new ImageWithBannerResponse(randomBanner, imageResponse.getBody()));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // No banner found
             }
@@ -119,6 +100,8 @@ public class BannerController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // Internal error
         }
     }
+
+
 
     // Method to validate if the fileType is valid
     private boolean isValidFileType(String fileType) {
