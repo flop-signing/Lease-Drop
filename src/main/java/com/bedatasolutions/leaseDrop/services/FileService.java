@@ -7,6 +7,8 @@ import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.controllers.BannerController;
 import com.bedatasolutions.leaseDrop.dao.BannerDao;
 import com.bedatasolutions.leaseDrop.dto.BannerDto;
+
+import com.bedatasolutions.leaseDrop.dto.FileResponseDto;
 import com.bedatasolutions.leaseDrop.repo.BannerRepo;
 import jakarta.transaction.Transactional;
 import org.apache.commons.io.FileUtils;
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,6 +48,7 @@ public class FileService {
     }
 
 
+/*
     @Transactional
     public String upload(MultipartFile file, Integer duration) throws IOException {
         if (!file.isEmpty()) {
@@ -83,7 +87,57 @@ public class FileService {
         }
         return "No file uploaded";
     }
+*/
+@Transactional
+public FileResponseDto upload(MultipartFile file, Integer duration) throws IOException {
+    if (!file.isEmpty()) {
+        String originalFileName = file.getOriginalFilename();
+        // Define the full file storage path
+        Path filePath = Path.of(FILE_SOURCE, FilePath.USERS.get(), FilePath.USER_PHOTO.get());
 
+        // Process and save the file
+        MultipartFileUtils.processFile(file, filePath.toFile().getAbsolutePath(), true);
+
+        // Construct the relative file path for accessing the image
+        String filePathEE = Path.of(FilePath.USERS.get(), FilePath.USER_PHOTO.get(), originalFileName).toString();
+        String encodedFilePath = urlEncode(filePathEE);
+
+        // Save banner info to database
+        BannerDao bannerDao = new BannerDao();
+        bannerDao.setActionKey(ActionType.CREATE);
+        bannerDao.setFileName(originalFileName);
+        bannerDao.setFileSize(FileUtils.byteCountToDisplaySize(file.getSize()));
+        bannerDao.setDuration(duration);
+        bannerDao.setFilePath(encodedFilePath);
+        bannerDao.setFileType(ThumbnailVariant.M.name());
+
+        // Save to the repository
+        bannerRepo.save(bannerDao);
+
+        // Construct the image URL
+        String imgUrl = MvcUriComponentsBuilder.fromMethodName(
+                BannerController.class, "getImage", ThumbnailVariant.M.name(), encodedFilePath
+        ).build().toString();
+
+        // Prepare the response
+        return new FileResponseDto(
+                duration,
+                LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")),  // createdAt
+                originalFileName,
+                FileUtils.byteCountToDisplaySize(file.getSize()),  // fileSize
+                bannerDao.getId(),
+                imgUrl
+        );
+    }
+    return new FileResponseDto(
+            null,  // duration
+            "No date",  // createdAt (placeholder value)
+            "No file selected",  // fileName (file not selected)
+            null,  // fileSize (no size available)
+            null,  // id (no id available)
+            "Error uploading file"  // url (error message instead of a URL)
+    );
+}
 
 
     public Map<String, Object> getAllImages(Integer page, Integer size, String field, String direction) throws Exception {

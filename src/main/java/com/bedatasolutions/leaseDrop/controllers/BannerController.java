@@ -3,6 +3,7 @@ package com.bedatasolutions.leaseDrop.controllers;
 import com.bedatasolutions.leaseDrop.config.file.ThumbnailVariant;
 import com.bedatasolutions.leaseDrop.dao.BannerDao;
 import com.bedatasolutions.leaseDrop.dto.BannerDto;
+
 import com.bedatasolutions.leaseDrop.dto.FileResponseDto;
 import com.bedatasolutions.leaseDrop.services.FileService;
 import com.bedatasolutions.leaseDrop.utils.ApiResponse;
@@ -34,8 +35,7 @@ public class BannerController {
     private String FILE_SOURCE;
 
 
-    @PostMapping
-    public ResponseEntity<FileResponseDto> uploadBanner(
+/*    public ResponseEntity<FileResponseDto> uploadBanner(
             @RequestParam("file") MultipartFile file,
             @RequestParam("duration") Integer duration) {  // Accept duration as part of the request
         String uploadedFileName = "";
@@ -51,7 +51,45 @@ public class BannerController {
             log.error("Error uploading file: {}", e.getMessage());
             return new ResponseEntity<>(new FileResponseDto(uploadedFileName == "" ? " No File Selected" : null, "Error uploading file"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }*/
+@CrossOrigin(origins = "*")
+@PostMapping
+    public ResponseEntity<FileResponseDto> uploadBanner(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("duration") Integer duration) {
+
+        String uploadedFileName = "";
+
+        if (file.isEmpty()) {
+            log.error("No file selected for upload.");
+            return new ResponseEntity<>(new FileResponseDto(
+                    null,  // duration
+                    "No date",  // createdAt, can be any placeholder value
+                    null,  // fileName
+                    null,  // fileSize
+                    null,  // id
+                    null ), HttpStatus.BAD_REQUEST);
+
+        }
+
+        try {
+            FileResponseDto response = fileService.upload(file, duration);  // Now returns complete response
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }catch (Exception e) {
+            log.error("Error uploading file: {}", e.getMessage());
+
+            // Handle the error response by providing all required arguments
+            return new ResponseEntity<>(new FileResponseDto(
+                    null,  // duration (no value in error)
+                    "No date",  // createdAt (no value in error, can be a placeholder)
+                    uploadedFileName.isEmpty() ? "No file selected" : uploadedFileName,  // fileName (handle empty case)
+                    null,  // fileSize (no value in error)
+                    null,  // id (no value in error)
+                    "Error uploading file"
+            ), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 
 
     @GetMapping(value = "/images", produces = MediaType.IMAGE_JPEG_VALUE)
