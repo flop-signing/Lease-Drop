@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ public class CustomerController {
 
 
     private final CustomerService customerService;
+
     public CustomerController(CustomerService customerService) {
         this.customerService = customerService;
     }
@@ -36,57 +38,19 @@ public class CustomerController {
     }
 
 
-/*    // Get All Customers
+
+
     @GetMapping
-    public ResponseEntity<List<CustomerDto>> getAllCustomers() {
-        List<CustomerDto> customers = customerService.getAllCustomers();
-        return ResponseEntity.ok(customers);
-    }*/
+    public Map<String, Object> getAllCustomers(
+            @RequestParam(required = false, defaultValue = "1") Integer page,
+            @RequestParam(required = false, defaultValue = "10") Integer size,
+            @RequestParam(required = false, defaultValue = "id") String field,
+            @RequestParam(required = false, defaultValue = "desc") String direction,
+            @RequestParam MultiValueMap<String, String> filters) {
 
-
-/*    @GetMapping
-    public ResponseEntity<Map<String, Object>> getAllCustomers(
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String field,
-            @RequestParam(required = false) String direction) {
-
-        Map<String, Object> response = customerService.getAllCustomers(page, size, field, direction);
-
-        return ResponseEntity.ok(response);  // Return the response with HTTP 200 OK status
-    }*/
-
-
-    @GetMapping("/all")
-    public Map<String, Object> getCustomers(
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String field,
-            @RequestParam(required = false) String direction,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String packageType,
-            @RequestParam(required = false) BigDecimal amount,
-            @RequestParam(required = false) LocalDate purchaseDate,
-            @RequestParam(required = false) LocalDate expireDate,
-            @RequestParam(required = false) Integer remainingDays,
-            @RequestParam(required = false) Integer fileProcessing) {
-
-        // Prepare the filters map by passing all optional parameters
-        Map<String, Object> filterParams = Map.of(
-                "name", name,
-                "packageType", packageType,
-                "amount", amount,
-                "purchaseDate", purchaseDate,
-                "expireDate", expireDate,
-                "remainingDays", remainingDays,
-                "fileProcessing", fileProcessing
-        );
-
-        // Call the service method to get customers with dynamic filtering
-        return customerService.getAllCustomers(page, size, field, direction, filterParams);
+        // Call the service method to fetch customers with pagination, sorting, and filtering
+        return customerService.getAllCustomers(page, size, field, direction, filters);
     }
-
-
 
     // Get Customer by ID
     @GetMapping("/{id}")

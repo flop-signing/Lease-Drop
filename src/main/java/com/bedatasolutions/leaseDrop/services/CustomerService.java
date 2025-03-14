@@ -1,6 +1,14 @@
 package com.bedatasolutions.leaseDrop.services;
 
-
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.util.MultiValueMap;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.criteria.CustomerSpecifications;
 import com.bedatasolutions.leaseDrop.dao.CustomerDao;
@@ -8,6 +16,7 @@ import com.bedatasolutions.leaseDrop.dto.CustomerDto;
 import com.bedatasolutions.leaseDrop.repo.CustomerRepo;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import com.bedatasolutions.leaseDrop.criteria.FilterHelper;
@@ -17,11 +26,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,44 +61,6 @@ public class CustomerService {
     }
 
 
-   /* public Map<String, Object> getAllCustomers(Integer page, Integer size, String field, String direction) {
-        // Set default values if null
-        if (page == null || page < 1) page = 1; // Default to page 1
-        if (size == null || size <= 0) size = 10; // Default to size 10
-        if (field == null || field.trim().isEmpty()) field = "id"; // Default to `id`
-        if (direction == null || direction.trim().isEmpty()) direction = "desc"; // Default to descending
-
-        // Define sorting direction
-        Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-
-        // Create a PageRequest with sorting
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, field));
-
-        // Fetch the customers with pagination and sorting
-        Page<CustomerDao> customerPage = customerRepo.findAll(pageRequest);
-
-        // Convert the CustomerDao to CustomerDto
-        List<CustomerDto> customerDtos = customerPage.getContent().stream()
-                .map(this::daoToDto)
-                .collect(Collectors.toList());
-
-        // Prepare the response with pagination details
-        Map<String, Object> response = new HashMap<>();
-        response.put("payload", customerDtos);
-
-        Map<String, Object> header = new HashMap<>();
-        header.put("pageNo", page);
-        header.put("totalPages", customerPage.getTotalPages());
-        header.put("pageSize", size);
-        header.put("totalElements", customerPage.getTotalElements());
-
-        response.put("header", header);
-
-        return response;
-    }
-
-
-*/
 
 /*
 
@@ -166,14 +139,28 @@ public class CustomerService {
 */
 
 
+
+
+    // Dynamically build the COLUMN_TYPE_MAP using reflection
+    private static final Map<String, Class<?>> COLUMN_TYPE_MAP = buildColumnTypeMap(CustomerDao.class);
+
+
+    private static Map<String, Class<?>> buildColumnTypeMap(Class<?> entityClass) {
+        Map<String, Class<?>> columnTypeMap = new HashMap<>();
+        for (Field field : entityClass.getDeclaredFields()) {
+            columnTypeMap.put(field.getName(), field.getType());
+        }
+        return columnTypeMap;
+    }
+
     public Map<String, Object> getAllCustomers(Integer page, Integer size, String field, String direction,
-                                               Map<String, Object> filterParams) {
+                                               MultiValueMap<String, String> filters) {
 
         // Set default values if null
-        if (page == null || page < 1) page = 1; // Default to page 1
-        if (size == null || size <= 0) size = 10; // Default to size 10
-        if (field == null || field.trim().isEmpty()) field = "id"; // Default to `id`
-        if (direction == null || direction.trim().isEmpty()) direction = "desc"; // Default to descending
+        page = Optional.ofNullable(page).filter(p -> p >= 1).orElse(1); // Default to page 1
+        size = Optional.ofNullable(size).filter(s -> s > 0).orElse(10); // Default to size 10
+        field = Optional.ofNullable(field).filter(f -> !f.trim().isEmpty()).orElse("id"); // Default to `id`
+        direction = Optional.ofNullable(direction).filter(d -> !d.trim().isEmpty()).orElse("desc"); // Default to descending
 
         // Define sorting direction
         Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
@@ -181,24 +168,20 @@ public class CustomerService {
         // Create a PageRequest with sorting
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, field));
 
-        // Create Specification for filtering dynamically
-        Specification<CustomerDao> spec = Specification.where(null);
-
-        // Use reflection to dynamically access fields of CustomerDao
-        Field[] fields = CustomerDao.class.getDeclaredFields();
-
-        // Dynamically check and apply filters for non-null values from the filterParams map
-        for (Field fieldObj : fields) {
-            fieldObj.setAccessible(true); // Make private fields accessible
-
-            // Get the corresponding value from the filterParams map
-            Object value = filterParams.get(fieldObj.getName());
-
-            // If the value is not null, dynamically build the specification and apply the filter
-            if (value != null) {
-                spec = spec.and(buildSpecification(fieldObj.getName(), value)); // Dynamically apply the filter
-            }
+        // Convert filter values to their appropriate types dynamically
+        Map<String, Object> typedFilters = new HashMap<>();
+        if (filters != null && !filters.isEmpty()) {
+            typedFilters = filters.entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
+                    .filter(entry -> COLUMN_TYPE_MAP.containsKey(entry.getKey())) // Skip unknown keys
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> convertValue(entry.getValue().get(0), COLUMN_TYPE_MAP.get(entry.getKey()))
+                    ));
         }
+
+        // Create the dynamic specification using the filters map
+        Specification<CustomerDao> spec = CustomerSpecifications.createSpecification(typedFilters);
 
         // Fetch the customers with pagination and sorting, applying the filters
         Page<CustomerDao> customerPage = customerRepo.findAll(spec, pageRequest);
@@ -223,22 +206,111 @@ public class CustomerService {
         return response;
     }
 
-    private Specification<CustomerDao> buildSpecification(String fieldName, Object fieldValue) {
-        return (Root<CustomerDao> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> {
-            if (fieldValue instanceof String) {
-                return criteriaBuilder.like(criteriaBuilder.lower(root.get(fieldName)), "%" + fieldValue.toString().toLowerCase() + "%");
-            } else if (fieldValue instanceof BigDecimal) {
-                return criteriaBuilder.equal(root.get(fieldName), fieldValue);
-            } else if (fieldValue instanceof LocalDate) {
-                return criteriaBuilder.equal(root.get(fieldName), fieldValue);
-            } else if (fieldValue instanceof Integer) {
-                return criteriaBuilder.equal(root.get(fieldName), fieldValue);
-            } else {
-                return criteriaBuilder.isNull(root.get(fieldName)); // Handle null case
-            }
-        };
+    // Helper method to convert a value to the specified type
+    private Object convertValue(String value, Class<?> targetType) {
+        if (targetType == null) {
+            throw new IllegalArgumentException("Unsupported filter key. Valid keys are: " + COLUMN_TYPE_MAP.keySet());
+        }
+        if (targetType == String.class) {
+            return value;
+        } else if (targetType == BigDecimal.class) {
+            return new BigDecimal(value);
+        } else if (targetType == LocalDate.class) {
+            return LocalDate.parse(value, DateTimeFormatter.ISO_DATE);
+        } else if (targetType == Integer.class) {
+            return Integer.parseInt(value);
+        } else {
+            throw new IllegalArgumentException("Unsupported type: " + targetType);
+        }
     }
 
+
+
+
+/*
+
+    // Map to store column names and their corresponding data types
+    private static final Map<String, Class<?>> COLUMN_TYPE_MAP = Map.of(
+            "name", String.class,
+            "packageType", String.class,
+            "amount", BigDecimal.class,
+            "purchaseDate", LocalDate.class,
+            "expireDate", LocalDate.class,
+            "remainingDays", Integer.class,
+            "fileProcessing", Integer.class
+    );
+
+    public Map<String, Object> getAllCustomers(Integer page, Integer size, String field, String direction,
+                                               MultiValueMap<String, String> filters) {
+
+        // Set default values if null
+        page = Optional.ofNullable(page).filter(p -> p >= 1).orElse(1); // Default to page 1
+        size = Optional.ofNullable(size).filter(s -> s > 0).orElse(10); // Default to size 10
+        field = Optional.ofNullable(field).filter(f -> !f.trim().isEmpty()).orElse("id"); // Default to `id`
+        direction = Optional.ofNullable(direction).filter(d -> !d.trim().isEmpty()).orElse("desc"); // Default to descending
+
+        // Define sorting direction
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        // Create a PageRequest with sorting
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, field));
+
+        // Convert filter values to their appropriate types dynamically
+        Map<String, Object> typedFilters = new HashMap<>();
+        if (filters != null && !filters.isEmpty()) {
+            typedFilters = filters.entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
+                    .filter(entry -> COLUMN_TYPE_MAP.containsKey(entry.getKey())) // Skip unknown keys
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> convertValue(entry.getValue().get(0), COLUMN_TYPE_MAP.get(entry.getKey()))
+                    ));
+        }
+
+        // Create the dynamic specification using the filters map
+        Specification<CustomerDao> spec = CustomerSpecifications.createSpecification(typedFilters);
+
+        // Fetch the customers with pagination and sorting, applying the filters
+        Page<CustomerDao> customerPage = customerRepo.findAll(spec, pageRequest);
+
+        // Convert the CustomerDao to CustomerDto
+        List<CustomerDto> customerDtos = customerPage.getContent().stream()
+                .map(this::daoToDto)
+                .collect(Collectors.toList());
+
+        // Prepare the response with pagination details
+        Map<String, Object> response = new HashMap<>();
+        response.put("payload", customerDtos);
+
+        Map<String, Object> header = new HashMap<>();
+        header.put("pageNo", page);
+        header.put("totalPages", customerPage.getTotalPages());
+        header.put("pageSize", size);
+        header.put("totalElements", customerPage.getTotalElements());
+
+        response.put("header", header);
+
+        return response;
+    }
+
+    // Helper method to convert a value to the specified type
+    private Object convertValue(String value, Class<?> targetType) {
+        if (targetType == null) {
+            throw new IllegalArgumentException("Unsupported filter key. Valid keys are: " + COLUMN_TYPE_MAP.keySet());
+        }
+        if (targetType == String.class) {
+            return value;
+        } else if (targetType == BigDecimal.class) {
+            return new BigDecimal(value);
+        } else if (targetType == LocalDate.class) {
+            return LocalDate.parse(value, DateTimeFormatter.ISO_DATE);
+        } else if (targetType == Integer.class) {
+            return Integer.parseInt(value);
+        } else {
+            throw new IllegalArgumentException("Unsupported type: " + targetType);
+        }
+    }
+*/
 
 
 
