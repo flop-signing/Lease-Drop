@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -22,14 +23,14 @@ public class CustomerDao extends AuditableEntity {
     @Version
     private Integer version;
 
-    @Column(name = "tx_name")
+    @Column(name = "tx_name",length = 140)
     private String name;
 
-    @Column(name = "tx_package_type")
+    @Column(name = "tx_package_type",length = 140)
     private String packageType;
 
-    @Column(name = "tx_amount")
-    private String amount;
+    @Column(name = "flt_amount")
+    private BigDecimal amount;
 
     @Column(name = "dt_purchase_date")
     private LocalDate purchaseDate;
@@ -37,8 +38,8 @@ public class CustomerDao extends AuditableEntity {
     @Column(name = "dt_expire_date")
     private LocalDate expireDate;
 
-    @Column(name = "tx_remaining_days")
-    private String remainingDays;
+    @Column(name = "id_remaining_days")
+    private Integer remainingDays;
 
     @Column(name = "id_file_processing")
     private Integer fileProcessing;

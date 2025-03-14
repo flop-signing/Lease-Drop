@@ -1,5 +1,6 @@
 package com.bedatasolutions.leaseDrop.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record CustomerDto(
@@ -7,10 +8,10 @@ public record CustomerDto(
         Integer version,
         String name,
         String packageType,
-        String amount,
+        BigDecimal amount,
         LocalDate purchaseDate,
         LocalDate expireDate,
-        String remainingDays,
+        Integer remainingDays,
         Integer fileProcessing
 
 ) {

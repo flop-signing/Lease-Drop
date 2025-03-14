@@ -43,16 +43,15 @@ public class FileService {
 
 
     private final BannerRepo bannerRepo;
+
     public FileService(BannerRepo bannerRepo) {
         this.bannerRepo = bannerRepo;
     }
 
 
-/*
     @Transactional
-    public String upload(MultipartFile file, Integer duration) throws IOException {
+    public FileResponseDto upload(MultipartFile file, Integer duration) throws IOException {
         if (!file.isEmpty()) {
-
             String originalFileName = file.getOriginalFilename();
             // Define the full file storage path
             Path filePath = Path.of(FILE_SOURCE, FilePath.USERS.get(), FilePath.USER_PHOTO.get());
@@ -60,84 +59,46 @@ public class FileService {
             // Process and save the file
             MultipartFileUtils.processFile(file, filePath.toFile().getAbsolutePath(), true);
 
-
-
             // Construct the relative file path for accessing the image
             String filePathEE = Path.of(FilePath.USERS.get(), FilePath.USER_PHOTO.get(), originalFileName).toString();
-            String encodedFilePath= urlEncode(filePathEE);
-
-////             Generate image URL (assuming you have some method to generate this URL)
-//            String imgUrl = MvcUriComponentsBuilder.fromMethodName(
-//                    BannerController.class, "getImage", ThumbnailVariant.M.name(), urlEncode(filePathEE)
-//            ).build().toString();
+            String encodedFilePath = urlEncode(filePathEE);
 
             // Save banner info to database
             BannerDao bannerDao = new BannerDao();
             bannerDao.setActionKey(ActionType.CREATE);
-
             bannerDao.setFileName(originalFileName);
             bannerDao.setFileSize(FileUtils.byteCountToDisplaySize(file.getSize()));
             bannerDao.setDuration(duration);
             bannerDao.setFilePath(encodedFilePath);
             bannerDao.setFileType(ThumbnailVariant.M.name());
-//            bannerDao.setImageUrl(imgUrl);
 
+            // Save to the repository
             bannerRepo.save(bannerDao);
-            return originalFileName;
+
+            // Construct the image URL
+            String imgUrl = MvcUriComponentsBuilder.fromMethodName(
+                    BannerController.class, "getImage", ThumbnailVariant.M.name(), encodedFilePath
+            ).build().toString();
+
+            // Prepare the response
+            return new FileResponseDto(
+                    duration,
+                    LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")),  // createdAt
+                    originalFileName,
+                    FileUtils.byteCountToDisplaySize(file.getSize()),  // fileSize
+                    bannerDao.getId(),
+                    imgUrl
+            );
         }
-        return "No file uploaded";
-    }
-*/
-@Transactional
-public FileResponseDto upload(MultipartFile file, Integer duration) throws IOException {
-    if (!file.isEmpty()) {
-        String originalFileName = file.getOriginalFilename();
-        // Define the full file storage path
-        Path filePath = Path.of(FILE_SOURCE, FilePath.USERS.get(), FilePath.USER_PHOTO.get());
-
-        // Process and save the file
-        MultipartFileUtils.processFile(file, filePath.toFile().getAbsolutePath(), true);
-
-        // Construct the relative file path for accessing the image
-        String filePathEE = Path.of(FilePath.USERS.get(), FilePath.USER_PHOTO.get(), originalFileName).toString();
-        String encodedFilePath = urlEncode(filePathEE);
-
-        // Save banner info to database
-        BannerDao bannerDao = new BannerDao();
-        bannerDao.setActionKey(ActionType.CREATE);
-        bannerDao.setFileName(originalFileName);
-        bannerDao.setFileSize(FileUtils.byteCountToDisplaySize(file.getSize()));
-        bannerDao.setDuration(duration);
-        bannerDao.setFilePath(encodedFilePath);
-        bannerDao.setFileType(ThumbnailVariant.M.name());
-
-        // Save to the repository
-        bannerRepo.save(bannerDao);
-
-        // Construct the image URL
-        String imgUrl = MvcUriComponentsBuilder.fromMethodName(
-                BannerController.class, "getImage", ThumbnailVariant.M.name(), encodedFilePath
-        ).build().toString();
-
-        // Prepare the response
         return new FileResponseDto(
-                duration,
-                LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")),  // createdAt
-                originalFileName,
-                FileUtils.byteCountToDisplaySize(file.getSize()),  // fileSize
-                bannerDao.getId(),
-                imgUrl
+                null,  // duration
+                "No date",  // createdAt (placeholder value)
+                "No file selected",  // fileName (file not selected)
+                null,  // fileSize (no size available)
+                null,  // id (no id available)
+                "Error uploading file"  // url (error message instead of a URL)
         );
     }
-    return new FileResponseDto(
-            null,  // duration
-            "No date",  // createdAt (placeholder value)
-            "No file selected",  // fileName (file not selected)
-            null,  // fileSize (no size available)
-            null,  // id (no id available)
-            "Error uploading file"  // url (error message instead of a URL)
-    );
-}
 
 
     public Map<String, Object> getAllImages(Integer page, Integer size, String field, String direction) throws Exception {
@@ -296,35 +257,50 @@ public FileResponseDto upload(MultipartFile file, Integer duration) throws IOExc
 
 
     @Transactional
-    public String update(BannerDto bannerDto) {
+    public FileResponseDto update(BannerDto bannerDto) {
         BannerDao existingBanner = bannerRepo.findById(bannerDto.id()).orElse(null);
 
         if (existingBanner != null) {
             // Update the fields of the existing banner
-
             existingBanner.setDuration(bannerDto.duration());
-
-
-           existingBanner.setActionKey(ActionType.UPDATE);
+            existingBanner.setActionKey(ActionType.UPDATE);
 
             // Save the updated banner back to the database
             bannerRepo.save(existingBanner);
-            return "Banner updated successfully with ID: " + bannerDto.id();
+
+            // Retrieve the file path from the updated banner (Base64 encoded)
+            String encodedFilePath = existingBanner.getFilePath();
+
+            // Generate the image URL using MvcUriComponentsBuilder (same as in getAllImages)
+            String imgUrl = MvcUriComponentsBuilder.fromMethodName(
+                    BannerController.class, "getImage", ThumbnailVariant.M.name(), encodedFilePath
+            ).build().toString();
+
+
+            // Prepare FileResponseDto with updated banner data
+            return new FileResponseDto(
+                    existingBanner.getDuration(),
+                    existingBanner.getCreatedAt().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")),
+                    existingBanner.getFileName(),
+                    existingBanner.getFileSize(),
+                    existingBanner.getId(),
+                    imgUrl
+            );
         } else {
-            return "Banner not found with ID: " + bannerDto.id();
+            // Handle the case when banner is not found
+            throw new IllegalArgumentException("Banner not found with ID: " + bannerDto.id());
         }
     }
 
     @Transactional
-    public String delete(Integer id) {
+    public boolean delete(Integer id) {
         if (bannerRepo.existsById(id)) {
             bannerRepo.deleteById(id);  // Deletes the banner
-            return "Banner deleted successfully with ID: " + id;
+            return true; // Indicate successful deletion
         } else {
-            return "Banner not found with ID: " + id;
+            return false; // Banner not found
         }
     }
-
 
 
 }

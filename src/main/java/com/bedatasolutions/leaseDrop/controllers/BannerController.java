@@ -34,26 +34,8 @@ public class BannerController {
     @Value("${app.server.file.root.path}")
     private String FILE_SOURCE;
 
-
-/*    public ResponseEntity<FileResponseDto> uploadBanner(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("duration") Integer duration) {  // Accept duration as part of the request
-        String uploadedFileName = "";
-
-        if (file.isEmpty()) {
-            log.error("No file selected for upload.");
-            return new ResponseEntity<>(new FileResponseDto(null, "No file selected for upload"), HttpStatus.BAD_REQUEST);
-        }
-        try {
-            uploadedFileName = fileService.upload(file, duration);
-            return new ResponseEntity<>(new FileResponseDto(uploadedFileName, "File Uploaded Successfully"), HttpStatus.CREATED);
-        } catch (Exception e) {
-            log.error("Error uploading file: {}", e.getMessage());
-            return new ResponseEntity<>(new FileResponseDto(uploadedFileName == "" ? " No File Selected" : null, "Error uploading file"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }*/
-@CrossOrigin(origins = "*")
-@PostMapping
+   // @CrossOrigin(origins = "*")
+    @PostMapping
     public ResponseEntity<FileResponseDto> uploadBanner(
             @RequestParam("file") MultipartFile file,
             @RequestParam("duration") Integer duration) {
@@ -68,14 +50,14 @@ public class BannerController {
                     null,  // fileName
                     null,  // fileSize
                     null,  // id
-                    null ), HttpStatus.BAD_REQUEST);
+                    null), HttpStatus.BAD_REQUEST);
 
         }
 
         try {
             FileResponseDto response = fileService.upload(file, duration);  // Now returns complete response
             return new ResponseEntity<>(response, HttpStatus.CREATED);
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error uploading file: {}", e.getMessage());
 
             // Handle the error response by providing all required arguments
@@ -89,7 +71,6 @@ public class BannerController {
             ), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
 
     @GetMapping(value = "/images", produces = MediaType.IMAGE_JPEG_VALUE)
@@ -110,7 +91,7 @@ public class BannerController {
     }
 
 
-    @CrossOrigin(origins = "*")
+   // @CrossOrigin(origins = "*")
     @GetMapping("/random-image")
     public ResponseEntity<Map<String, Object>> getRandomImage(@RequestParam(value = "type", required = false) String fileType) {
         try {
@@ -126,15 +107,6 @@ public class BannerController {
             if (randomBanner != null) {
                 // Retrieve the file path from the banner (already Base64 encoded)
                 String encodedFilePath = randomBanner.getFilePath();
-
-          /*  // Decode the Base64 file path to get the original path
-            String decodedFilePath = new String(Base64.getDecoder().decode(encodedFilePath), StandardCharsets.UTF_8);
-
-            // Construct the full file path safely
-            String filePathEE = Path.of(decodedFilePath).toString();
-
-            // URL encode the decoded file path before passing it
-            String encodedFilePathForUrl = urlEncode(filePathEE);*/
 
                 // Generate image URL using the same method as in getAllImages()
                 String imgUrl = MvcUriComponentsBuilder.fromMethodName(
@@ -166,28 +138,51 @@ public class BannerController {
 
 
     // Update banner (PUT request)
+  //  @CrossOrigin(origins = "*")
     @PutMapping()
-    public ResponseEntity<ApiResponse<String>> update(@RequestBody @Valid BannerDto bannerDto) {
-        String message = fileService.update(bannerDto);
-        if (message.contains("successfully")) {
-            return ApiResponse.success(message, null);
-        } else {
-            return ApiResponse.error(message, null);
+    public ResponseEntity<ApiResponse<FileResponseDto>> update(@RequestBody @Valid BannerDto bannerDto) {
+        try {
+            // Call service method to update the banner and get the updated data
+            FileResponseDto updatedBanner = fileService.update(bannerDto);
+
+            // Return success response with the updated banner data
+            return ApiResponse.success("Banner updated successfully", updatedBanner);
+        } catch (Exception e) {
+            // Return error response if update fails
+            return ApiResponse.error("Error updating banner: " + e.getMessage(), null);
         }
     }
 
 
+
+/*    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        boolean isDeleted = fileService.delete(id);
+
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+    }*/
+
+   // @CrossOrigin(origins = "*")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> delete(@PathVariable Integer id) {
-        String message = fileService.delete(id);
-        if (message.contains("successfully")) {
-            return ApiResponse.success(message, null);
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        boolean isDeleted = fileService.delete(id);
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (successful deletion, processing may still be ongoing)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
         } else {
-            return ApiResponse.error(message, null);
+            // Return HTTP 404 Not Found if the banner doesn't exist
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 
-    @CrossOrigin(origins = "*")
+
+   // @CrossOrigin(origins = "*")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAllImages(
             @RequestParam(required = false) Integer page,
