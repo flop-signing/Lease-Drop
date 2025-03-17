@@ -12,7 +12,6 @@ import java.util.Map;
 
 public class EntitySpecifications {
 
-    // Generic specification for filtering by any column
     public static <T> Specification<T> createSpecification(Map<String, Object> filters) {
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction(); // Start with an empty predicate
@@ -24,7 +23,7 @@ public class EntitySpecifications {
 
                 if (value != null) {
                     if (value instanceof String) {
-                        // For String columns, perform a case-insensitive LIKE search
+                        // Case-insensitive LIKE search for String fields
                         predicate = criteriaBuilder.and(predicate,
                                 criteriaBuilder.like(
                                         criteriaBuilder.lower(root.get(column)),
@@ -32,20 +31,37 @@ public class EntitySpecifications {
                                 )
                         );
                     } else if (value instanceof BigDecimal) {
-                        // For BigDecimal columns, perform an EQUAL search
+                        // EQUAL search for BigDecimal fields
                         predicate = criteriaBuilder.and(predicate,
                                 criteriaBuilder.equal(root.get(column), value)
                         );
                     } else if (value instanceof LocalDate) {
-                        // For LocalDate columns, perform an EQUAL search
+                        // EQUAL search for LocalDate fields
                         predicate = criteriaBuilder.and(predicate,
                                 criteriaBuilder.equal(root.get(column), value)
                         );
                     } else if (value instanceof Integer) {
-                        // For Integer columns, perform an EQUAL search
+                        // EQUAL search for Integer fields
                         predicate = criteriaBuilder.and(predicate,
                                 criteriaBuilder.equal(root.get(column), value)
                         );
+                    } else if (value instanceof Long) {
+                        // EQUAL search for Long fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else if (value instanceof Double) {
+                        // EQUAL search for Double fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else if (value instanceof Boolean) {
+                        // EQUAL search for Boolean fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else {
+                        throw new IllegalArgumentException("Unsupported filter type: " + value.getClass().getSimpleName());
                     }
                 }
             }

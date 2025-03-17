@@ -4,12 +4,13 @@ import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.criteria.EntitySpecifications;
 import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import com.bedatasolutions.leaseDrop.dto.CustomerDto;
-import com.bedatasolutions.leaseDrop.dto.rest.RestPage;
 import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
 import com.bedatasolutions.leaseDrop.dto.rest.RestSort;
 import com.bedatasolutions.leaseDrop.repo.CustomerRepo;
 import com.bedatasolutions.leaseDrop.utils.ClassMapper;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -29,9 +30,12 @@ import java.util.stream.Collectors;
 public class CustomerService {
 
     private final CustomerRepo customerRepo;
+    private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
+    private final Map<String, Class<?>> COLUMN_TYPE_MAP;
 
     public CustomerService(CustomerRepo customerRepo) {
         this.customerRepo = customerRepo;
+        this.COLUMN_TYPE_MAP = ClassMapper.buildColumnTypeMap(CustomerDao.class);
 
     }
 
@@ -125,10 +129,9 @@ public class CustomerService {
     }
 */
 
-/*
 
     // Dynamically build the COLUMN_TYPE_MAP using reflection
-    private final Map<String, Class<?>> COLUMN_TYPE_MAP = ClassMapper.buildColumnTypeMap(CustomerDao.class);
+
 
     public RestPageResponse<CustomerDao, CustomerDto> getAllCustomers(Integer page, Integer size, RestSort sort,
                                                                       Map<String, String> filters) {
@@ -139,6 +142,9 @@ public class CustomerService {
         // Create a PageRequest with sorting
         PageRequest pageRequest = PageRequest.of(page - 1, size, sortE);
 
+
+        logger.info("Input filters: {}", filters);
+
         // Convert filter values to their appropriate types dynamically
         Map<String, Object> typedFilters = filters.entrySet().stream()
                 .filter(entry ->
@@ -147,8 +153,10 @@ public class CustomerService {
                                 && COLUMN_TYPE_MAP.containsKey(entry.getKey()))
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry ->ClassMapper.convertValue(entry.getValue(), COLUMN_TYPE_MAP.get(entry.getKey()))
+                        entry -> ClassMapper.convertValue(entry.getValue(), COLUMN_TYPE_MAP.get(entry.getKey()))
                 ));
+//        logger.info("Typed filters: {}", typedFilters);
+
 
         // Create the dynamic specification using the filters map
         Specification<CustomerDao> spec = EntitySpecifications.createSpecification(typedFilters);
@@ -162,10 +170,9 @@ public class CustomerService {
                 .collect(Collectors.toList());
         return new RestPageResponse<>(customerDtos, customerPage);
     }
-*/
 
 
-   /* // Helper method to convert a value to the specified type
+    /*// Helper method to convert a value to the specified type
     private Object convertValue(String value, Class<?> targetType) {
         if (targetType == null) {
             throw new IllegalArgumentException("Unsupported filter key. Valid keys are: " + COLUMN_TYPE_MAP.keySet());
@@ -181,7 +188,10 @@ public class CustomerService {
         } else {
             throw new IllegalArgumentException("Unsupported type: " + targetType);
         }
-    }*/
+    }
+
+*/
+
 
 
 /*
@@ -270,18 +280,17 @@ public class CustomerService {
 */
 
 
-
-
+/*
     private final Map<String, Class<?>> COLUMN_TYPE_MAP = ClassMapper.buildColumnTypeMap(CustomerDao.class);
 
-    public RestPageResponse<CustomerDao, CustomerDto> getAllCustomers(RestPage page, RestSort sort,
+    public RestPageResponse<CustomerDao, CustomerDto> getAllCustomers(Integer page, Integer size, RestSort sort,
                                                                       Map<String, String> filters) {
         // Define sorting direction
         Sort sortE = sort.direction().equalsIgnoreCase("asc")
                 ? Sort.by(sort.field()).ascending() : Sort.by(sort.field()).descending();
 
         // Create a PageRequest with sorting
-        PageRequest pageRequest = PageRequest.of(page.pageNumber(), page.size()-1, sortE);
+        PageRequest pageRequest = PageRequest.of(page - 1, size, sortE);
 
         // Convert filter values to their appropriate types dynamically
         Map<String, Object> typedFilters = filters.entrySet().stream()
@@ -292,7 +301,7 @@ public class CustomerService {
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> ClassMapper.convertValue(entry.getValue(), COLUMN_TYPE_MAP.get(entry.getKey()))
-                ));
+                );
 
         // Create the dynamic specification using the filters map
         Specification<CustomerDao> spec = EntitySpecifications.createSpecification(typedFilters);
@@ -305,9 +314,7 @@ public class CustomerService {
                 .map(this::daoToDto)
                 .collect(Collectors.toList());
         return new RestPageResponse<>(customerDtos, customerPage);
-    }
-
-
+    }*/
 
     // Get a single Customer
     public CustomerDto getCustomerById(Integer id) {

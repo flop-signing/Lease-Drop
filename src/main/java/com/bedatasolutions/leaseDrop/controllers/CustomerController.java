@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -25,8 +26,10 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
+
     public CustomerController(CustomerService customerService) {
         this.customerService = customerService;
+
     }
 
     // Create Customer
@@ -40,21 +43,20 @@ public class CustomerController {
     }
 
 
+
 /*
-    @GetMapping
-    public RestPageResponse<CustomerDao, CustomerDto> getAllCustomers(
+
+    public Map<String, Object> getAllCustomers(
             @RequestParam(required = false, defaultValue = "1") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
-//            @RequestParam(required = false, defaultValue = "id") String field,
-//            @RequestParam(required = false, defaultValue = "desc") String direction,
-            @RequestParam(required = false) RestSort sort,
-            @RequestParam Map<String, String> filters) {
+            @RequestParam(required = false, defaultValue = "id") String field,
+            @RequestParam(required = false, defaultValue = "desc") String direction,
+            @RequestParam MultiValueMap<String, String> filters) {
 
         // Call the service method to fetch customers with pagination, sorting, and filtering
-//        return customerService.getAllCustomers(page, size, new RestSort(field, direction), filters);
-        //return customerService.getAllCustomers(page, size, sort, filters);
-    }
-*/
+        return customerServiceBk.getAllCustomers(page, size, field, direction, filters);
+    }*/
+
 
     @GetMapping(path = "/test", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public RestPageResponse<CustomerDao, CustomerDto> getAllCustomerCustom(
@@ -63,7 +65,7 @@ public class CustomerController {
         // Call the service method to fetch customers with pagination, sorting, and filtering
 //        return customerService.getAllCustomers(page, size, new RestSort(field, direction), filters);
 //        return customerService.getAllCustomers(query.page().pageNumber(), query.page().size(), query.sort(), query.filter().filters());
-        return customerService.getAllCustomers(query.page(), query.sort(), query.filter());
+        return customerService.getAllCustomers(query.page().pageNumber(), query.page().size(), query.sort(), query.filter());
     }
 
     // Get Customer by ID
