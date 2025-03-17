@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.bedatasolutions.leaseDrop.config.file.MultipartFileUtils.urlDecode;
 import static com.bedatasolutions.leaseDrop.config.file.MultipartFileUtils.urlEncode;
 
 @Service
@@ -219,7 +220,7 @@ public class FileService {
 
     public Resource getImage(String type, String path) throws IOException {
         // Decode the URL-encoded file path from Base64
-        String cmpPath = new String(Base64.getDecoder().decode(path));
+        String cmpPath = urlDecode(path);
         log.info("Decoded file path: {}", cmpPath);
 
         // Construct the full file path
@@ -292,15 +293,47 @@ public class FileService {
         }
     }
 
+
     @Transactional
     public boolean delete(Integer id) {
-        if (bannerRepo.existsById(id)) {
-            bannerRepo.deleteById(id);  // Deletes the banner
+        // Find the banner by ID
+        BannerDao banner = bannerRepo.findById(id).orElse(null);
+
+        if (banner != null) {
+            // Retrieve the file path from the banner
+            String encodedFilePath = banner.getFilePath();
+            String filePath = new String(Base64.getDecoder().decode(encodedFilePath));
+
+            // Construct the main file path
+            Path mainFilePath = Path.of(FILE_SOURCE, filePath);
+
+// Construct the paths for the subfolders (e.g., temp/100 and temp/200)
+            String baseFileName = Path.of(filePath).getFileName().toString(); // Extract the file name (e.g., image.png)
+            Path temp100Path = Path.of(FILE_SOURCE, FilePath.USERS.get(), FilePath.USER_PHOTO.get(),ThumbnailVariant.L.path(), baseFileName);
+            Path temp200Path = Path.of(FILE_SOURCE, FilePath.USERS.get(), FilePath.USER_PHOTO.get(),ThumbnailVariant.M.path(), baseFileName);
+
+            try {
+                // Delete the file from the main path
+                Files.deleteIfExists(mainFilePath);
+
+                // Delete the file from the temp/100 path
+                Files.deleteIfExists(temp100Path);
+
+                // Delete the file from the temp/200 path
+                Files.deleteIfExists(temp200Path);
+
+            } catch (IOException e) {
+                log.error("Failed to delete file from one or more paths", e);
+                // Handle the exception as needed
+            }
+
+            // Delete the banner from the database
+            bannerRepo.deleteById(id);
+
             return true; // Indicate successful deletion
         } else {
             return false; // Banner not found
         }
     }
-
 
 }

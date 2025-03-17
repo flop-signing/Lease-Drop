@@ -1,17 +1,19 @@
 package com.bedatasolutions.leaseDrop.controllers;
 
+import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import com.bedatasolutions.leaseDrop.dto.CustomerDto;
+import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
+import com.bedatasolutions.leaseDrop.dto.rest.RestQuery;
+import com.bedatasolutions.leaseDrop.dto.rest.RestSort;
 import com.bedatasolutions.leaseDrop.services.CustomerService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -38,18 +40,30 @@ public class CustomerController {
     }
 
 
-
-
+/*
     @GetMapping
-    public Map<String, Object> getAllCustomers(
+    public RestPageResponse<CustomerDao, CustomerDto> getAllCustomers(
             @RequestParam(required = false, defaultValue = "1") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
-            @RequestParam(required = false, defaultValue = "id") String field,
-            @RequestParam(required = false, defaultValue = "desc") String direction,
-            @RequestParam MultiValueMap<String, String> filters) {
+//            @RequestParam(required = false, defaultValue = "id") String field,
+//            @RequestParam(required = false, defaultValue = "desc") String direction,
+            @RequestParam(required = false) RestSort sort,
+            @RequestParam Map<String, String> filters) {
 
         // Call the service method to fetch customers with pagination, sorting, and filtering
-        return customerService.getAllCustomers(page, size, field, direction, filters);
+//        return customerService.getAllCustomers(page, size, new RestSort(field, direction), filters);
+        //return customerService.getAllCustomers(page, size, sort, filters);
+    }
+*/
+
+    @GetMapping(path = "/test", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public RestPageResponse<CustomerDao, CustomerDto> getAllCustomerCustom(
+            @RequestBody(required = false) RestQuery query) {
+
+        // Call the service method to fetch customers with pagination, sorting, and filtering
+//        return customerService.getAllCustomers(page, size, new RestSort(field, direction), filters);
+//        return customerService.getAllCustomers(query.page().pageNumber(), query.page().size(), query.sort(), query.filter().filters());
+        return customerService.getAllCustomers(query.page(), query.sort(), query.filter());
     }
 
     // Get Customer by ID

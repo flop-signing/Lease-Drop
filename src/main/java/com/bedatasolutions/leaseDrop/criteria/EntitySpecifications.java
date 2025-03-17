@@ -1,6 +1,5 @@
 package com.bedatasolutions.leaseDrop.criteria;
 
-import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
@@ -11,11 +10,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
 
-public class CustomerSpecifications {
+public class EntitySpecifications {
 
-    // Dynamic specification for filtering by any column
-    public static Specification<CustomerDao> createSpecification(Map<String, Object> filters) {
-        return (Root<CustomerDao> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> {
+    // Generic specification for filtering by any column
+    public static <T> Specification<T> createSpecification(Map<String, Object> filters) {
+        return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction(); // Start with an empty predicate
 
             // Iterate over the filters and build the predicate dynamically
