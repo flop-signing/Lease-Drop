@@ -1,7 +1,7 @@
 package com.bedatasolutions.leaseDrop.services;
 
 import com.bedatasolutions.leaseDrop.constants.db.ActionType;
-import com.bedatasolutions.leaseDrop.criteria.EntitySpecifications;
+
 import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import com.bedatasolutions.leaseDrop.dto.CustomerDto;
 import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
@@ -159,7 +159,7 @@ public class CustomerService {
 
 
         // Create the dynamic specification using the filters map
-        Specification<CustomerDao> spec = EntitySpecifications.createSpecification(typedFilters);
+        Specification<CustomerDao> spec = ClassMapper.createSpecification(typedFilters);
 
         // Fetch the customers with pagination and sorting, applying the filters
         Page<CustomerDao> customerPage = customerRepo.findAll(spec, pageRequest);

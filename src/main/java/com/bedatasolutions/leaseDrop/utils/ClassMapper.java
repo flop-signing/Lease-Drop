@@ -1,5 +1,11 @@
 package com.bedatasolutions.leaseDrop.utils;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -8,17 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ClassMapper {
-//    // Static map to store column types
-//    private static final Map<String, Class<?>> COLUMN_TYPE_MAP = new HashMap<>();
-//
-//    // Method to build the column type map
-//    public static Map<String, Class<?>> buildColumnTypeMap(Class<?> clazz) {
-//        // Use reflection to populate the map
-//        // Example: COLUMN_TYPE_MAP.put("columnName", clazz.getDeclaredField("columnName").getType());
-//        // This is a simplified example; you would need to implement the reflection logic.
-//        return COLUMN_TYPE_MAP;
-//    }
-
 
     public static <T> Map<String, Class<?>> buildColumnTypeMap(T typeClass) {
         Map<String, Class<?>> columnTypeMap = new HashMap<>();
@@ -27,6 +22,8 @@ public class ClassMapper {
         }
         return columnTypeMap;
     }
+
+
     public static Object convertValue(String value, Class<?> targetType) {
         if (targetType == null) {
             throw new IllegalArgumentException("Unsupported filter key.  " );
@@ -54,11 +51,64 @@ public class ClassMapper {
         }
     }
 
-//    // Method to get the column type map (optional, for external access)
-//    public static Map<String, Class<?>> getColumnTypeMap() {
-//        return COLUMN_TYPE_MAP;
-//    }
 
+    public static <T> Specification<T> createSpecification(Map<String, Object> filters) {
+        return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction(); // Start with an empty predicate
+
+            // Iterate over the filters and build the predicate dynamically
+            for (Map.Entry<String, Object> entry : filters.entrySet()) {
+                String column = entry.getKey();
+                Object value = entry.getValue();
+
+                if (value != null) {
+                    if (value instanceof String) {
+                        // Case-insensitive LIKE search for String fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.like(
+                                        criteriaBuilder.lower(root.get(column)),
+                                        "%" + ((String) value).toLowerCase() + "%"
+                                )
+                        );
+                    } else if (value instanceof BigDecimal) {
+                        // EQUAL search for BigDecimal fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else if (value instanceof LocalDate) {
+                        // EQUAL search for LocalDate fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else if (value instanceof Integer) {
+                        // EQUAL search for Integer fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else if (value instanceof Long) {
+                        // EQUAL search for Long fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else if (value instanceof Double) {
+                        // EQUAL search for Double fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else if (value instanceof Boolean) {
+                        // EQUAL search for Boolean fields
+                        predicate = criteriaBuilder.and(predicate,
+                                criteriaBuilder.equal(root.get(column), value)
+                        );
+                    } else {
+                        throw new IllegalArgumentException("Unsupported filter type: " + value.getClass().getSimpleName());
+                    }
+                }
+            }
+
+            return predicate; // Return the final predicate
+        };
+    }
 
 
 }
