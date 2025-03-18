@@ -7,9 +7,11 @@ import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.controllers.BannerController;
 import com.bedatasolutions.leaseDrop.dao.BannerDao;
 import com.bedatasolutions.leaseDrop.dto.BannerDto;
-
-import com.bedatasolutions.leaseDrop.dto.FileResponseDto;
+import com.bedatasolutions.leaseDrop.dto.rest.RestPage;
+import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
+import com.bedatasolutions.leaseDrop.dto.rest.RestSort;
 import com.bedatasolutions.leaseDrop.repo.BannerRepo;
+import com.bedatasolutions.leaseDrop.utils.ClassMapper;
 import jakarta.transaction.Transactional;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -18,7 +20,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
@@ -27,48 +32,54 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static com.bedatasolutions.leaseDrop.config.file.MultipartFileUtils.urlDecode;
 import static com.bedatasolutions.leaseDrop.config.file.MultipartFileUtils.urlEncode;
 
 @Service
-public class FileService {
+public class BannerService {
     @Value("${app.server.file.root.path}")
     private String FILE_SOURCE;
 
-    private static final Logger log = LoggerFactory.getLogger(FileService.class);
-
-
+    private static final Logger log = LoggerFactory.getLogger(BannerService.class);
     private final BannerRepo bannerRepo;
+    private final Map<String, Class<?>> COLUMN_TYPE_MAP;
 
-    public FileService(BannerRepo bannerRepo) {
+
+    public BannerService(BannerRepo bannerRepo) {
         this.bannerRepo = bannerRepo;
+        this.COLUMN_TYPE_MAP = ClassMapper.buildColumnTypeMap(BannerDao.class);
     }
 
 
     @Transactional
-    public FileResponseDto upload(MultipartFile file, Integer duration) throws IOException {
+    public BannerDto upload(MultipartFile file, Integer duration) throws IOException {
         if (!file.isEmpty()) {
             String originalFileName = file.getOriginalFilename();
             // Define the full file storage path
-            Path filePath = Path.of(FILE_SOURCE, FilePath.USERS.get(), FilePath.USER_PHOTO.get());
+            Path filePath = Path.of(FILE_SOURCE, FilePath.BANNER.get(), FilePath.BANNER_GALLERY.get());
 
             // Process and save the file
             MultipartFileUtils.processFile(file, filePath.toFile().getAbsolutePath(), true);
 
             // Construct the relative file path for accessing the image
-            String filePathEE = Path.of(FilePath.USERS.get(), FilePath.USER_PHOTO.get(), originalFileName).toString();
+            String filePathEE = Path.of(FilePath.BANNER.get(),  FilePath.BANNER_GALLERY.get(), originalFileName).toString();
             String encodedFilePath = urlEncode(filePathEE);
+
+            String size = FileUtils.byteCountToDisplaySize(file.getSize());
+
 
             // Save banner info to database
             BannerDao bannerDao = new BannerDao();
             bannerDao.setActionKey(ActionType.CREATE);
             bannerDao.setFileName(originalFileName);
-            bannerDao.setFileSize(FileUtils.byteCountToDisplaySize(file.getSize()));
+            bannerDao.setFileSize(size);
             bannerDao.setDuration(duration);
             bannerDao.setFilePath(encodedFilePath);
             bannerDao.setFileType(ThumbnailVariant.M.name());
@@ -82,19 +93,19 @@ public class FileService {
             ).build().toString();
 
             // Prepare the response
-            return new FileResponseDto(
-                    duration,
-                    LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")),  // createdAt
-                    originalFileName,
-                    FileUtils.byteCountToDisplaySize(file.getSize()),  // fileSize
+            return new BannerDto(
                     bannerDao.getId(),
+                    LocalDateTime.now().toLocalDate(),  // createdAt
+                    duration,
+                    originalFileName,
+                    size,  // fileSize
                     imgUrl
             );
         }
-        return new FileResponseDto(
+        return new BannerDto(
                 null,  // duration
-                "No date",  // createdAt (placeholder value)
-                "No file selected",  // fileName (file not selected)
+                null,  // createdAt (placeholder value)
+                0,  // fileName (file not selected)
                 null,  // fileSize (no size available)
                 null,  // id (no id available)
                 "Error uploading file"  // url (error message instead of a URL)
@@ -102,121 +113,70 @@ public class FileService {
     }
 
 
-    public Map<String, Object> getAllImages(Integer page, Integer size, String field, String direction) throws Exception {
-        // Handle null and invalid input values, set defaults if necessary
-        if (page == null || page < 1) page = 1; // Default to page 1
-        if (size == null || size <= 0) size = 10; // Default to size 10
-        if (field == null || field.trim().isEmpty()) field = "id"; // Default to `id` for sorting
-        if (direction == null || direction.trim().isEmpty()) direction = "desc"; // Default to "desc" for sorting
+    public RestPageResponse<BannerDao,BannerDto> getAllBanners(RestPage page, RestSort sort,
+                                                               Map<String, String> filters) {
+        // Define sorting direction
+        Sort sortE = sort.direction().equalsIgnoreCase("asc")
+                ? Sort.by(sort.field()).ascending() : Sort.by(sort.field()).descending();
 
-        // Convert `field` to lowercase to handle case insensitivity
-        field = field.toLowerCase();
+        // Create a PageRequest with sorting
+        PageRequest pageRequest = PageRequest.of(page.pageNumber()-1, page.size(), sortE);
 
-        // Define Date Format
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-        // Sort direction (ASC/DESC)
-        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        // Convert filter values to their appropriate types dynamically
+        Map<String, Object> typedFilters = filters.entrySet().stream()
+                .filter(entry ->
+                        entry.getValue() != null
+                                && !entry.getValue().isEmpty()
+                                && COLUMN_TYPE_MAP.containsKey(entry.getKey()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> ClassMapper.convertValue(entry.getValue(), COLUMN_TYPE_MAP.get(entry.getKey()))
+                ));
 
-        // Determine Sorting Strategy (DB vs Java)
-        List<BannerDao> banners;
-        if (field.equals("filesize") || field.equals("filename")) {
-            // Sorting by `fileSize` or `fileName` requires manual sorting (fetch all)
-            banners = bannerRepo.findAll();
-        } else {
-            // Use DATABASE SORTING for `fileName`, `createdAt`, and `id`
-            String sortField = field.equals("filename") ? "tx_file_name" :
-                    field.equals("createdat") ? "createdAt" :
-                            field.equals("id") ? "id" : field; // Ensure default is id
 
-            banners = bannerRepo.findAll(Sort.by(sortDirection, sortField));
-        }
 
-        // Remove any banners with null `fileName` values before sorting
-        banners = banners.stream()
-                .filter(b -> b.getFileName() != null && !b.getFileName().trim().isEmpty())
+
+        // Create the dynamic specification using the filters map
+        Specification<BannerDao> spec = ClassMapper.createSpecification(typedFilters);
+
+        // Fetch the customers with pagination and sorting, applying the filters
+        Page<BannerDao> bannerPage = bannerRepo.findAll(spec, pageRequest);
+
+        // Convert the BannerDao to BannerDto and add imgUrl to each DTO
+        List<BannerDto> bannerDtos = bannerPage.getContent().stream()
+                .map(bannerDao -> {
+                    BannerDto bannerDto = daoToDto(bannerDao); // Convert DAO to DTO
+                    // Get the id and encoded file path from BannerDao
+                    Integer id = bannerDto.id();
+                    BannerDao banner = bannerRepo.findById(id).orElse(null);
+                    if (banner != null) {
+                        String encodedFilePath = banner.getFilePath();
+
+                        // Construct the image URL
+                        String imgUrl = MvcUriComponentsBuilder.fromMethodName(
+                                BannerController.class, "getImage", ThumbnailVariant.M.name(), encodedFilePath
+                        ).build().toString();
+
+                        // Set the imgUrl in BannerDto
+                        bannerDto= bannerDto.url(imgUrl);
+                    }
+                    return bannerDto;
+                })
                 .collect(Collectors.toList());
 
-        // Manual Sorting for `fileSize` and `fileName`
-        if (field.equals("filesize")) {
-            Comparator<BannerDao> sizeComparator = Comparator.comparingInt(b -> extractNumericSize(b.getFileSize()));
-            if (direction.equalsIgnoreCase("desc")) {
-                sizeComparator = sizeComparator.reversed();
-            }
-            banners.sort(sizeComparator);
-        } else if (field.equals("filename")) {
-            Comparator<BannerDao> nameComparator = Comparator.comparing(BannerDao::getFileName, String.CASE_INSENSITIVE_ORDER);
-            if (direction.equalsIgnoreCase("desc")) {
-                nameComparator = nameComparator.reversed();
-            }
-            banners.sort(nameComparator);
-        }
 
-        // Convert BannerDao to response format
-        List<Map<String, Object>> fileInfos = new ArrayList<>();
-        for (BannerDao banner : banners) {
-            try {
-                if (banner.getFileName() == null || banner.getFileName().trim().isEmpty()) {
-                    log.warn("Skipping banner with null or empty fileName, id: {}", banner.getId());
-                    continue;
-                }
 
-                // Construct file path safely
-                String filePathEE = Path.of(FilePath.USERS.get(), FilePath.USER_PHOTO.get(), banner.getFileName()).toString();
+//        // Log the response
+//        log.info("Fetched Banners - Total Banners: {}, Page: {}, Banners: {}",
+//                bannerPage.getTotalElements(), page.pageNumber(), bannerDtos);
 
-                // Generate image URL
-                String imgUrl = MvcUriComponentsBuilder.fromMethodName(
-                        BannerController.class, "getImage", ThumbnailVariant.M.name(), urlEncode(filePathEE)
-                ).build().toString();
 
-                // Format date using dd-MM-yyyy
-                String formattedDate = banner.getCreatedAt() != null ? banner.getCreatedAt().format(dateFormatter) : "N/A";
-
-                // Create response object with correct field names
-                Map<String, Object> fileInfo = new HashMap<>();
-                fileInfo.put("url", imgUrl);
-                fileInfo.put("fileName", banner.getFileName());
-                fileInfo.put("fileSize", banner.getFileSize() != null ? banner.getFileSize() : "N/A");
-                fileInfo.put("duration", banner.getDuration());
-                fileInfo.put("id", banner.getId());
-                fileInfo.put("createdAt", formattedDate);
-
-                fileInfos.add(fileInfo);
-            } catch (Exception e) {
-                log.error("Error processing banner with fileName: {}", banner.getFileName(), e);
-            }
-        }
-
-        // Apply pagination manually since we fetched all data
-        int start = Math.min((page - 1) * size, fileInfos.size());
-        int end = Math.min(start + size, fileInfos.size());
-        List<Map<String, Object>> paginatedList = fileInfos.subList(start, end);
-
-        // Create response structure
-        Map<String, Object> response = new HashMap<>();
-        response.put("payload", paginatedList);
-
-        // Add page info to "header"
-        Map<String, Object> header = new HashMap<>();
-        header.put("pageNo", page);
-        header.put("totalElements", fileInfos.size());
-        header.put("pageSize", size);
-        header.put("totalPages", (int) Math.ceil((double) fileInfos.size() / size));
-
-        response.put("header", header);
-
-        return response;
+        return new RestPageResponse<>(bannerDtos, bannerPage);
     }
 
 
-    private int extractNumericSize(String sizeString) {
-        if (sizeString == null || !sizeString.contains(" ")) return 0;
-        try {
-            return Integer.parseInt(sizeString.split(" ")[0]); // Extract number before "KB"
-        } catch (NumberFormatException e) {
-            return 0; // Return 0 if parsing fails
-        }
-    }
+
 
     public Resource getImage(String type, String path) throws IOException {
         // Decode the URL-encoded file path from Base64
@@ -258,7 +218,7 @@ public class FileService {
 
 
     @Transactional
-    public FileResponseDto update(BannerDto bannerDto) {
+    public BannerDto update(BannerDto bannerDto) {
         BannerDao existingBanner = bannerRepo.findById(bannerDto.id()).orElse(null);
 
         if (existingBanner != null) {
@@ -279,12 +239,12 @@ public class FileService {
 
 
             // Prepare FileResponseDto with updated banner data
-            return new FileResponseDto(
+            return new BannerDto(
+                    existingBanner.getId(),
+                    existingBanner.getCreatedAt().toLocalDate(),
                     existingBanner.getDuration(),
-                    existingBanner.getCreatedAt().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")),
                     existingBanner.getFileName(),
                     existingBanner.getFileSize(),
-                    existingBanner.getId(),
                     imgUrl
             );
         } else {
@@ -309,8 +269,8 @@ public class FileService {
 
 // Construct the paths for the subfolders (e.g., temp/100 and temp/200)
             String baseFileName = Path.of(filePath).getFileName().toString(); // Extract the file name (e.g., image.png)
-            Path temp100Path = Path.of(FILE_SOURCE, FilePath.USERS.get(), FilePath.USER_PHOTO.get(),ThumbnailVariant.L.path(), baseFileName);
-            Path temp200Path = Path.of(FILE_SOURCE, FilePath.USERS.get(), FilePath.USER_PHOTO.get(),ThumbnailVariant.M.path(), baseFileName);
+            Path temp100Path = Path.of(FILE_SOURCE, FilePath.BANNER.get(), FilePath.BANNER_GALLERY.get(),ThumbnailVariant.L.path(), baseFileName);
+            Path temp200Path = Path.of(FILE_SOURCE, FilePath.BANNER.get(), FilePath.BANNER_GALLERY.get(),ThumbnailVariant.M.path(), baseFileName);
 
             try {
                 // Delete the file from the main path
@@ -335,5 +295,29 @@ public class FileService {
             return false; // Banner not found
         }
     }
+
+
+    public BannerDto daoToDto(BannerDao bannerDao) {
+        return new BannerDto(
+                bannerDao.getId(),
+                bannerDao.getCreatedAt().toLocalDate(),
+                bannerDao.getDuration(),
+                bannerDao.getFileName(),
+                bannerDao.getFileSize(),
+                null
+
+        );
+    }
+
+    // Convert DTO to DAO
+    public BannerDao dtoToDao(BannerDto bannerDto, BannerDao bannerDao) {
+
+        bannerDao.setDuration(bannerDto.duration());
+        bannerDao.setFileName(bannerDto.fileName());
+        bannerDao.setFileSize(bannerDto.fileSize());
+        bannerDao.setCreatedAt(bannerDto.createdAt().atStartOfDay());
+        return bannerDao;
+    }
+
 
 }

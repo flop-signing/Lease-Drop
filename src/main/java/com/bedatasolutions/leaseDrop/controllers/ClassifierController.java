@@ -1,9 +1,15 @@
 package com.bedatasolutions.leaseDrop.controllers;
 
+import com.bedatasolutions.leaseDrop.dao.ClassifierDao;
+import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import com.bedatasolutions.leaseDrop.dto.ClassifierDto;
+import com.bedatasolutions.leaseDrop.dto.CustomerDto;
+import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
+import com.bedatasolutions.leaseDrop.dto.rest.RestQuery;
 import com.bedatasolutions.leaseDrop.services.ClassifierService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,15 +33,9 @@ public class ClassifierController {
         return  ResponseEntity.status(HttpStatus.CREATED).body(createdClassifier);
     }
 
-    // Read - Get all Classifiers
-/*
-    @GetMapping
-    public ResponseEntity<List<ClassifierDto>> getAllClassifiers() {
-        List<ClassifierDto> classifiers = classifierService.getAllClassifiers();
-        return new ResponseEntity<>(classifiers, HttpStatus.OK);
-    }
-*/
 
+
+/*
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllClassifiers(
             @RequestParam( required = false) Integer page,
@@ -48,6 +48,18 @@ public class ClassifierController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+*/
+
+
+    @GetMapping( consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public RestPageResponse<ClassifierDao, ClassifierDto> getAllClassifier(
+            @RequestBody(required = false) RestQuery query) {
+
+        // Call the service method to fetch customers with pagination, sorting, and filtering
+//        return customerService.getAllCustomers(page, size, new RestSort(field, direction), filters);
+//        return customerService.getAllCustomers(query.page().pageNumber(), query.page().size(), query.sort(), query.filter().filters());
+        return classifierService.getAllClassifiers(query.page(), query.sort(), query.filter());
+    }
 
     // Read - Get a Classifier by ID
     @GetMapping("/{id}")

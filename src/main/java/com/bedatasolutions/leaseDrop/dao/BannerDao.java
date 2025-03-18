@@ -30,8 +30,6 @@ public class BannerDao extends AuditableEntity {
     @Column(name = "tx_file_type")
     private String fileType;
 
-//    @Column(name="tx_image_url")
-//    private String imageUrl;
 
     @Column(name = "tx_file_name")
     private String fileName;

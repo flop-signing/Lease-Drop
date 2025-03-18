@@ -3,9 +3,9 @@ package com.bedatasolutions.leaseDrop.controllers;
 import com.bedatasolutions.leaseDrop.config.file.ThumbnailVariant;
 import com.bedatasolutions.leaseDrop.dao.BannerDao;
 import com.bedatasolutions.leaseDrop.dto.BannerDto;
-
-import com.bedatasolutions.leaseDrop.dto.FileResponseDto;
-import com.bedatasolutions.leaseDrop.services.FileService;
+import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
+import com.bedatasolutions.leaseDrop.dto.rest.RestQuery;
+import com.bedatasolutions.leaseDrop.services.BannerService;
 import com.bedatasolutions.leaseDrop.utils.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class BannerController {
-    private final FileService fileService;
+    private final BannerService bannerService;
 
 
     @Value("${app.server.file.root.path}")
@@ -36,7 +36,7 @@ public class BannerController {
 
    // @CrossOrigin(origins = "*")
     @PostMapping
-    public ResponseEntity<FileResponseDto> uploadBanner(
+    public ResponseEntity<BannerDto> uploadBanner(
             @RequestParam("file") MultipartFile file,
             @RequestParam("duration") Integer duration) {
 
@@ -44,9 +44,9 @@ public class BannerController {
 
         if (file.isEmpty()) {
             log.error("No file selected for upload.");
-            return new ResponseEntity<>(new FileResponseDto(
+            return new ResponseEntity<>(new BannerDto(
                     null,  // duration
-                    "No date",  // createdAt, can be any placeholder value
+                    null,  // createdAt, can be any placeholder value
                     null,  // fileName
                     null,  // fileSize
                     null,  // id
@@ -55,16 +55,20 @@ public class BannerController {
         }
 
         try {
-            FileResponseDto response = fileService.upload(file, duration);  // Now returns complete response
+            BannerDto response = bannerService.upload(file, duration);  // Now returns complete response
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
             log.error("Error uploading file: {}", e.getMessage());
 
+
+
+
+        
             // Handle the error response by providing all required arguments
-            return new ResponseEntity<>(new FileResponseDto(
+            return new ResponseEntity<>(new BannerDto(
                     null,  // duration (no value in error)
-                    "No date",  // createdAt (no value in error, can be a placeholder)
-                    uploadedFileName.isEmpty() ? "No file selected" : uploadedFileName,  // fileName (handle empty case)
+                    null,  // createdAt (no value in error, can be a placeholder)
+                    0,  // duration (handle empty case)
                     null,  // fileSize (no value in error)
                     null,  // id (no value in error)
                     "Error uploading file"
@@ -77,7 +81,7 @@ public class BannerController {
     public ResponseEntity<Resource> getImage(@RequestParam String type, @RequestParam String path) {
         try {
             // Call service method to retrieve the image
-            Resource image = fileService.getImage(type, path);
+            Resource image = bannerService.getImage(type, path);
             if (image != null) {
                 return ResponseEntity.ok()
                         .contentType(MediaType.IMAGE_JPEG) // Set the response type to JPEG
@@ -101,7 +105,7 @@ public class BannerController {
             }
 
             // Retrieve a random banner from the service
-            BannerDao randomBanner = fileService.getRandomBanner();
+            BannerDao randomBanner = bannerService.getRandomBanner();
 
             // If a random banner is found
             if (randomBanner != null) {
@@ -137,13 +141,12 @@ public class BannerController {
     }
 
 
-    // Update banner (PUT request)
-  //  @CrossOrigin(origins = "*")
+
     @PutMapping()
-    public ResponseEntity<ApiResponse<FileResponseDto>> update(@RequestBody @Valid BannerDto bannerDto) {
+    public ResponseEntity<ApiResponse<BannerDto>> update(@RequestBody @Valid BannerDto bannerDto) {
         try {
             // Call service method to update the banner and get the updated data
-            FileResponseDto updatedBanner = fileService.update(bannerDto);
+            BannerDto updatedBanner = bannerService.update(bannerDto);
 
             // Return success response with the updated banner data
             return ApiResponse.success("Banner updated successfully", updatedBanner);
@@ -155,23 +158,10 @@ public class BannerController {
 
 
 
-/*    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        boolean isDeleted = fileService.delete(id);
 
-        if (isDeleted) {
-            // Return HTTP 202 Accepted (with no message body)
-            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
-        } else {
-            // Return HTTP 204 No Content (with no message body)
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        }
-    }*/
-
-   // @CrossOrigin(origins = "*")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        boolean isDeleted = fileService.delete(id);
+        boolean isDeleted = bannerService.delete(id);
         if (isDeleted) {
             // Return HTTP 202 Accepted (successful deletion, processing may still be ongoing)
             return ResponseEntity.status(HttpStatus.ACCEPTED).build();
@@ -182,20 +172,15 @@ public class BannerController {
     }
 
 
-   // @CrossOrigin(origins = "*")
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getAllImages(
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String field,
-            @RequestParam(required = false) String direction) {
-        try {
-            // Pass parameters to service layer, where default values are handled
-            Map<String, Object> result = fileService.getAllImages(page, size, field, direction);
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error retrieving images", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
+    @GetMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public RestPageResponse<BannerDao, BannerDto> getAllBanners(
+            @RequestBody(required = false) RestQuery query) {
+
+        // Call the service method to fetch customers with pagination, sorting, and filtering
+//        return customerService.getAllCustomers(page, size, new RestSort(field, direction), filters);
+//        return customerService.getAllCustomers(query.page().pageNumber(), query.page().size(), query.sort(), query.filter().filters());
+        return  bannerService.getAllBanners(query.page(), query.sort(), query.filter());
     }
 
 

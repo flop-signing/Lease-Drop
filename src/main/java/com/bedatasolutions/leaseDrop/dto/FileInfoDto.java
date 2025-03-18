@@ -21,7 +21,7 @@ public record FileInfoDto(
         String url,
         String name,
         String size,
-        Integer duration ,
+        Integer duration,
         LocalDateTime date
 ) {
 }

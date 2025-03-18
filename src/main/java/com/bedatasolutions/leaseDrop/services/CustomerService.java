@@ -4,6 +4,7 @@ import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 
 import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import com.bedatasolutions.leaseDrop.dto.CustomerDto;
+import com.bedatasolutions.leaseDrop.dto.rest.RestPage;
 import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
 import com.bedatasolutions.leaseDrop.dto.rest.RestSort;
 import com.bedatasolutions.leaseDrop.repo.CustomerRepo;
@@ -133,17 +134,17 @@ public class CustomerService {
     // Dynamically build the COLUMN_TYPE_MAP using reflection
 
 
-    public RestPageResponse<CustomerDao, CustomerDto> getAllCustomers(Integer page, Integer size, RestSort sort,
+    public RestPageResponse<CustomerDao, CustomerDto> getAllCustomers(RestPage page, RestSort sort,
                                                                       Map<String, String> filters) {
         // Define sorting direction
         Sort sortE = sort.direction().equalsIgnoreCase("asc")
                 ? Sort.by(sort.field()).ascending() : Sort.by(sort.field()).descending();
 
         // Create a PageRequest with sorting
-        PageRequest pageRequest = PageRequest.of(page - 1, size, sortE);
+        PageRequest pageRequest = PageRequest.of(page.pageNumber()-1, page.size(), sortE);
 
 
-        logger.info("Input filters: {}", filters);
+//        logger.info("Input filters: {}", filters);
 
         // Convert filter values to their appropriate types dynamically
         Map<String, Object> typedFilters = filters.entrySet().stream()
@@ -172,25 +173,6 @@ public class CustomerService {
     }
 
 
-    /*// Helper method to convert a value to the specified type
-    private Object convertValue(String value, Class<?> targetType) {
-        if (targetType == null) {
-            throw new IllegalArgumentException("Unsupported filter key. Valid keys are: " + COLUMN_TYPE_MAP.keySet());
-        }
-        if (targetType == String.class) {
-            return value;
-        } else if (targetType == BigDecimal.class) {
-            return new BigDecimal(value);
-        } else if (targetType == LocalDate.class) {
-            return LocalDate.parse(value, DateTimeFormatter.ISO_DATE);
-        } else if (targetType == Integer.class) {
-            return Integer.parseInt(value);
-        } else {
-            throw new IllegalArgumentException("Unsupported type: " + targetType);
-        }
-    }
-
-*/
 
 
 
@@ -280,41 +262,6 @@ public class CustomerService {
 */
 
 
-/*
-    private final Map<String, Class<?>> COLUMN_TYPE_MAP = ClassMapper.buildColumnTypeMap(CustomerDao.class);
-
-    public RestPageResponse<CustomerDao, CustomerDto> getAllCustomers(Integer page, Integer size, RestSort sort,
-                                                                      Map<String, String> filters) {
-        // Define sorting direction
-        Sort sortE = sort.direction().equalsIgnoreCase("asc")
-                ? Sort.by(sort.field()).ascending() : Sort.by(sort.field()).descending();
-
-        // Create a PageRequest with sorting
-        PageRequest pageRequest = PageRequest.of(page - 1, size, sortE);
-
-        // Convert filter values to their appropriate types dynamically
-        Map<String, Object> typedFilters = filters.entrySet().stream()
-                .filter(entry ->
-                        entry.getValue() != null
-                                && !entry.getValue().isEmpty()
-                                && COLUMN_TYPE_MAP.containsKey(entry.getKey()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> ClassMapper.convertValue(entry.getValue(), COLUMN_TYPE_MAP.get(entry.getKey()))
-                );
-
-        // Create the dynamic specification using the filters map
-        Specification<CustomerDao> spec = EntitySpecifications.createSpecification(typedFilters);
-
-        // Fetch the customers with pagination and sorting, applying the filters
-        Page<CustomerDao> customerPage = customerRepo.findAll(spec, pageRequest);
-
-        // Convert the CustomerDao to CustomerDto
-        List<CustomerDto> customerDtos = customerPage.getContent().stream()
-                .map(this::daoToDto)
-                .collect(Collectors.toList());
-        return new RestPageResponse<>(customerDtos, customerPage);
-    }*/
 
     // Get a single Customer
     public CustomerDto getCustomerById(Integer id) {

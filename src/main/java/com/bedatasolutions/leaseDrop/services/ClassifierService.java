@@ -2,17 +2,22 @@ package com.bedatasolutions.leaseDrop.services;
 
 import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.dao.ClassifierDao;
+import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import com.bedatasolutions.leaseDrop.dto.ClassifierDto;
+import com.bedatasolutions.leaseDrop.dto.rest.RestPage;
+import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
+import com.bedatasolutions.leaseDrop.dto.rest.RestSort;
 import com.bedatasolutions.leaseDrop.repo.ClassifierRepo;
+import com.bedatasolutions.leaseDrop.utils.ClassMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,9 +26,17 @@ import java.util.stream.Collectors;
 public class ClassifierService {
 
     private final ClassifierRepo classifierRepo;
+
+    private final Map<String, Class<?>> COLUMN_TYPE_MAP;
+
     public ClassifierService(ClassifierRepo classifierRepo) {
         this.classifierRepo = classifierRepo;
+        this.COLUMN_TYPE_MAP = ClassMapper.buildColumnTypeMap(ClassifierDao.class);
+
     }
+
+
+
     // Create Classifier
     @Transactional
     public ClassifierDto create(ClassifierDto classifierDto) {
@@ -105,47 +118,42 @@ public class ClassifierService {
 
 
 
-
-    // Method for getting all classifiers with pagination and sorting
-    public Map<String, Object> getAllClassifiers(Integer page, Integer size, String field, String direction) {
-        // Set default values if null
-        if (page == null || page < 1) page = 1; // Default to page 1
-        if (size == null || size <= 0) size = 10; // Default to size 10
-        if (field == null || field.trim().isEmpty()) field = "id"; // Default to `id`
-        if (direction == null || direction.trim().isEmpty()) direction = "desc"; // Default to descending
-
-        // Skip sorting by 'id_classifier_key' (or any other field you wish to exclude)
-        if ("id_classifier_key".equalsIgnoreCase(field)) {
-            field = "id";  // Default to `id` if sorting by `id_classifier_key`
-        }
-
+    public RestPageResponse<ClassifierDao, ClassifierDto> getAllClassifiers(RestPage page, RestSort sort,
+                                                                      Map<String, String> filters) {
         // Define sorting direction
-        Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sortE = sort.direction().equalsIgnoreCase("asc")
+                ? Sort.by(sort.field()).ascending() : Sort.by(sort.field()).descending();
 
         // Create a PageRequest with sorting
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(sortDirection, field));
+        PageRequest pageRequest = PageRequest.of(page.pageNumber()-1, page.size(), sortE);
 
-        // Fetch the classifiers with pagination and sorting
-        Page<ClassifierDao> classifierPage = classifierRepo.findAll(pageRequest);
 
-        // Convert the ClassifierDao to ClassifierDto
+//        logger.info("Input filters: {}", filters);
+
+        // Convert filter values to their appropriate types dynamically
+        Map<String, Object> typedFilters = filters.entrySet().stream()
+                .filter(entry ->
+                        entry.getValue() != null
+                                && !entry.getValue().isEmpty()
+                                && COLUMN_TYPE_MAP.containsKey(entry.getKey()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> ClassMapper.convertValue(entry.getValue(), COLUMN_TYPE_MAP.get(entry.getKey()))
+                ));
+//        logger.info("Typed filters: {}", typedFilters);
+
+
+        // Create the dynamic specification using the filters map
+        Specification<ClassifierDao> spec = ClassMapper.createSpecification(typedFilters);
+
+        // Fetch the customers with pagination and sorting, applying the filters
+        Page<ClassifierDao> classifierPage = classifierRepo.findAll(spec, pageRequest);
+
+        // Convert the CustomerDao to CustomerDto
         List<ClassifierDto> classifierDtos = classifierPage.getContent().stream()
                 .map(this::daoToDto)
                 .collect(Collectors.toList());
-
-        // Prepare the response with pagination details
-        Map<String, Object> response = new HashMap<>();
-        response.put("payload", classifierDtos);
-
-        Map<String, Object> header = new HashMap<>();
-        header.put("pageNo", page);
-        header.put("totalPages", classifierPage.getTotalPages());
-        header.put("pageSize", size);
-        header.put("totalElements", classifierPage.getTotalElements());
-
-        response.put("header", header);
-
-        return response;
+        return new RestPageResponse<>(classifierDtos, classifierPage);
     }
 
 
