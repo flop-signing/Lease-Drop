@@ -76,12 +76,16 @@ public class AnalyticsService {
 
 
     @Transactional
-    // Method to delete an analytics record by ID
-    public void delete(Integer id) {
-        AnalyticsDao analyticsDao = analyticsRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Analytics not found"));
+// Method to delete an analytics record by ID
+    public boolean delete(Integer id) {
+        AnalyticsDao analyticsDao = analyticsRepo.findById(id).orElse(null);
+        if (analyticsDao == null) {
+            return false; // Return false if the analytics record is not found
+        }
+
         analyticsDao.setActionKey(ActionType.DELETE);
         analyticsRepo.delete(analyticsDao); // Delete the analytics record
+        return true; // Return true to indicate successful deletion
     }
 
 

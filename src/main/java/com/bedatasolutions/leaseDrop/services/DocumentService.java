@@ -77,12 +77,16 @@ public class DocumentService {
 
 
     @Transactional
-    // Method to delete a document by ID
-    public void delete(Integer id) {
-        DocumentDao documentDao = documentRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
+// Method to delete a document by ID
+    public boolean delete(Integer id) {
+        DocumentDao documentDao = documentRepo.findById(id).orElse(null);
+        if (documentDao == null) {
+            return false; // Return false if the document is not found
+        }
+
         documentDao.setActionKey(ActionType.DELETE);
         documentRepo.delete(documentDao); // Delete the document
+        return true; // Return true to indicate successful deletion
     }
 
 

@@ -58,8 +58,16 @@ public class DropdownItemController {
 
     // Delete Dropdown Item
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Integer id) {
-        dropdownItemService.delete(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Dropdown Item deleted successfully");
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        boolean isDeleted = dropdownItemService.delete(id); // Delete dropdown item
+
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
     }
+
 }

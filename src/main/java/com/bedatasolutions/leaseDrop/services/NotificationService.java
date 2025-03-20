@@ -63,21 +63,24 @@ public class NotificationService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found with id: " + notificationDto.id());
         }
 
-        existingNotification.setActionKey(ActionType.UPDATE);
-
         // Save updated notification back to the database
         NotificationDao updatedNotification = notificationRepo.save(dtoToDao(notificationDto,existingNotification));
+        existingNotification.setActionKey(ActionType.UPDATE);
         return daoToDto(updatedNotification); // Return the updated notification as DTO
 
     }
 
     // Method to delete a notification by ID
     @Transactional
-    public void delete(Integer id) {
-        NotificationDao notificationDao = notificationRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+    public boolean delete(Integer id) {
+        NotificationDao notificationDao = notificationRepo.findById(id).orElse(null);
+        if (notificationDao == null) {
+            return false; // Return false if the notification is not found
+        }
+
         notificationDao.setActionKey(ActionType.DELETE);
         notificationRepo.delete(notificationDao); // Delete the notification
+        return true; // Return true to indicate successful deletion
     }
 
 

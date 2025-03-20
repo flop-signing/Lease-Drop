@@ -75,13 +75,16 @@ public class DocumentSummaryService {
 
 
     @Transactional
-    // Method to delete a document summary by ID
-    public void delete(Integer id) {
-        DocumentSummaryDao documentSummaryDao = documentSummaryRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Document Summary not found"));
+// Method to delete a document summary by ID
+    public boolean delete(Integer id) {
+        DocumentSummaryDao documentSummaryDao = documentSummaryRepo.findById(id).orElse(null);
+        if (documentSummaryDao == null) {
+            return false; // Return false if the document summary is not found
+        }
 
         documentSummaryDao.setActionKey(ActionType.DELETE);
         documentSummaryRepo.delete(documentSummaryDao); // Delete the document summary
+        return true; // Return true to indicate successful deletion
     }
 
 

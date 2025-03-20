@@ -58,8 +58,16 @@ public class NotificationController {
 
     // Delete Notification
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Integer id) {
-        notificationService.delete(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Notification deleted successfully");
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        boolean isDeleted = notificationService.delete(id); // Delete notification
+
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
     }
+
 }

@@ -60,11 +60,15 @@ public class TransactionController {
     // Endpoint to delete a transaction by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        try {
-            transactionService.delete(id);  // Delete transaction
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);  // Return 204 (No Content)
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);  // Return 404 if transaction not found
+        boolean isDeleted = transactionService.delete(id); // Delete transaction
+
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
     }
+
 }

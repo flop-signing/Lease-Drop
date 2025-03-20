@@ -64,12 +64,15 @@ public class DropdownTypeService {
 
     // Method to delete a dropdown type by ID
     @Transactional
-    public void delete(Integer id) {
-        DropdownTypeDao dropdownTypeDao = dropdownTypeRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dropdown Type not found"));
-        dropdownTypeRepo.delete(dropdownTypeDao); // Delete the dropdown type
-    }
+    public boolean delete(Integer id) {
+        DropdownTypeDao dropdownTypeDao = dropdownTypeRepo.findById(id).orElse(null);
+        if (dropdownTypeDao == null) {
+            return false; // Return false if the dropdown type is not found
+        }
 
+        dropdownTypeRepo.delete(dropdownTypeDao); // Delete the dropdown type
+        return true; // Return true to indicate successful deletion
+    }
 
 
     public DropdownTypeDto daoToDto(DropdownTypeDao dropdownTypeDao) {

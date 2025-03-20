@@ -81,14 +81,16 @@ public class PermissonService {
         return permissionDao;
     }
 
-    // Delete Role
+    // Delete Permission
     @Transactional
-    public void delete(Integer id) {
+    public boolean delete(Integer id) {
         Optional<PermissionDao> existingPermission = permissionRepo.findById(id);
         if (existingPermission.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Permission not found with id: " + id);
+            return false; // Return false if the permission is not found
         }
-        permissionRepo.deleteById(id);
+
+        permissionRepo.deleteById(id); // Delete the permission
+        return true; // Return true to indicate successful deletion
     }
 
 }

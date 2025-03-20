@@ -67,14 +67,17 @@ public class SubscriptionPlanService {
     }
 
 
-    // Method to delete a subscription by ID
+    // Method to delete a subscription plan by ID
     @Transactional
-    public void delete(Integer id) {
-        SubscriptionPlanDao subscriptionPlanDao = subscriptionPlanRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Subscription Plan not found"));
+    public boolean delete(Integer id) {
+        SubscriptionPlanDao subscriptionPlanDao = subscriptionPlanRepo.findById(id).orElse(null);
+        if (subscriptionPlanDao == null) {
+            return false; // Return false if the subscription plan is not found
+        }
 
         subscriptionPlanDao.setActionKey(ActionType.DELETE);
-        subscriptionPlanRepo.delete(subscriptionPlanDao); // Delete the subscription
+        subscriptionPlanRepo.delete(subscriptionPlanDao); // Delete the subscription plan
+        return true; // Return true to indicate successful deletion
     }
 
 

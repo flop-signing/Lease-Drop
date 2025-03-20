@@ -1,5 +1,6 @@
 package com.bedatasolutions.leaseDrop.services;
 
+import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.dao.PermissionDao;
 import com.bedatasolutions.leaseDrop.dao.RolesDao;
 import com.bedatasolutions.leaseDrop.dao.UserDao;
@@ -28,12 +29,8 @@ public class RoleService {
 
    // private static final Logger log = LoggerFactory.getLogger(RoleService.class);
 
-    @Autowired
+
     private final RolesRepo rolesRepo;
-    @Autowired
-    private UserRepo userRepo;
-    @Autowired
-    private PermissionRepo permissionRepo;
 
     public RoleService(RolesRepo rolesRepo) {
         this.rolesRepo = rolesRepo;
@@ -83,12 +80,15 @@ public class RoleService {
 
     // Delete Role
     @Transactional
-    public void delete(Integer id) {
-        Optional<RolesDao> existingRole = rolesRepo.findById(id);
-        if (existingRole.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found with id: " + id);
+    public boolean delete(Integer id) {
+        RolesDao roleDao = rolesRepo.findById(id).orElse(null);
+        if (roleDao == null) {
+            return false; // Return false if the role is not found
         }
-        rolesRepo.deleteById(id);
+
+        roleDao.setActionKey(ActionType.DELETE);
+        rolesRepo.delete(roleDao); // Delete the role
+        return true; // Return true to indicate successful deletion
     }
 
     // Get Roles with Pagination

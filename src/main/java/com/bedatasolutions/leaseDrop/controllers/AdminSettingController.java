@@ -1,7 +1,6 @@
 package com.bedatasolutions.leaseDrop.controllers;
 
 import com.bedatasolutions.leaseDrop.dto.AdminSettingDto;
-import com.bedatasolutions.leaseDrop.dto.PermissionDto;
 import com.bedatasolutions.leaseDrop.services.AdminSettingService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,9 +61,16 @@ public class AdminSettingController {
 
     // Delete Admin Setting
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Integer id) {
-        adminSettingService.delete(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Admin setting deleted successfully");
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        boolean isDeleted = adminSettingService.delete(id); // Delete admin setting
+
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
     }
 
 }

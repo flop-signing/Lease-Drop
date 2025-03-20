@@ -2,7 +2,6 @@ package com.bedatasolutions.leaseDrop.services;
 
 import com.bedatasolutions.leaseDrop.constants.db.ActionType;
 import com.bedatasolutions.leaseDrop.dao.ClassifierDao;
-import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import com.bedatasolutions.leaseDrop.dto.ClassifierDto;
 import com.bedatasolutions.leaseDrop.dto.rest.RestPage;
 import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
@@ -86,37 +85,35 @@ public class ClassifierService {
         return true;
     }
 
-    // Convert DAO to DTO
-    public ClassifierDto daoToDto(ClassifierDao classifierDao) {
-        List<String> relationList = ClassifierDto.convertCsvToList(classifierDao.getRelation());
-        return new ClassifierDto(
-                classifierDao.getId(),
-                classifierDao.getVersion(),
-                classifierDao.getName(),
-                classifierDao.getGroupKey(),
-                classifierDao.getDescription(),
-                classifierDao.getType(),
-                classifierDao.isActive(),
-                relationList
-        );
-    }
-
-    // Convert DTO to DAO
-    public ClassifierDao dtoToDao(ClassifierDto classifierDto, ClassifierDao classifierDao) {
-        classifierDao.setName(classifierDto.name());
-        classifierDao.setVersion(classifierDto.version());
-        classifierDao.setDescription(classifierDto.description());
-        classifierDao.setGroupKey(classifierDto.groupKey());
-        classifierDao.setType(classifierDto.type());
-        classifierDao.setActive(classifierDto.isActive());
-
-        // Convert List<String> to CSV string and set it
-        classifierDao.setRelation(String.join(",", classifierDto.relation()));
-
-        return classifierDao;
-    }
-
-
+//    // Convert DAO to DTO
+//    public ClassifierDto daoToDto(ClassifierDao classifierDao) {
+//
+//        return new ClassifierDto(
+//                classifierDao.getId(),
+//                classifierDao.getVersion(),
+//                classifierDao.getName(),
+//                classifierDao.getGroupKey(),
+//                classifierDao.getDescription(),
+//                classifierDao.getType(),
+//                classifierDao.getIsActive(),
+//                classifierDao.getRelation()
+//        );
+//    }
+//
+//    // Convert DTO to DAO
+//    public ClassifierDao dtoToDao(ClassifierDto classifierDto, ClassifierDao classifierDao) {
+//        classifierDao.setName(classifierDto.name());
+//        classifierDao.setVersion(classifierDto.version());
+//        classifierDao.setDescription(classifierDto.description());
+//        classifierDao.setGroupKey(classifierDto.groupKey());
+//        classifierDao.setType(classifierDto.type());
+//        classifierDao.setActive(classifierDto.isActive());
+//        classifierDao.setRelation(classifierDto.relation());
+//
+//        return classifierDao;
+//    }
+//
+//
 
     public RestPageResponse<ClassifierDao, ClassifierDto> getAllClassifiers(RestPage page, RestSort sort,
                                                                       Map<String, String> filters) {
@@ -155,6 +152,43 @@ public class ClassifierService {
                 .collect(Collectors.toList());
         return new RestPageResponse<>(classifierDtos, classifierPage);
     }
+
+    // Convert DAO to DTO
+    public ClassifierDto daoToDto(ClassifierDao classifierDao) {
+        return new ClassifierDto(
+                classifierDao.getId(),
+                classifierDao.getVersion(),
+                classifierDao.getName(),
+                classifierDao.getGroupKey(),
+                classifierDao.getDescription(),
+                classifierDao.getType(),
+                classifierDao.isActive(),
+                classifierDao.getRelationList()  // Convert CSV string to List<String>
+        );
+    }
+
+
+    // Convert DTO to DAO
+// Convert DTO to DAO
+    public ClassifierDao dtoToDao(ClassifierDto classifierDto, ClassifierDao classifierDao) {
+        classifierDao.setName(classifierDto.name());
+        classifierDao.setVersion(classifierDto.version());
+        classifierDao.setDescription(classifierDto.description());
+        classifierDao.setGroupKey(classifierDto.groupKey());
+        classifierDao.setType(classifierDto.type());
+        classifierDao.setActive(classifierDto.isActive());
+
+        // Convert List<String> to CSV string before saving
+        if (classifierDto.relation() != null && !classifierDto.relation().isEmpty()) {
+            classifierDao.setRelation(String.join(",", classifierDto.relation()));  // Convert List<String> to CSV string
+        } else {
+            classifierDao.setRelation("");  // Set empty string if relation is empty
+        }
+
+        return classifierDao;
+    }
+
+
 
 
 

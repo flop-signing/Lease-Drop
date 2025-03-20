@@ -61,10 +61,15 @@ public class ContactUsService {
 
     // Method to delete a contact inquiry by ID
     @Transactional
-    public void delete(Integer id) {
-       ContactUsDao contactUsDao=contactUsRepo.findById(id).orElseThrow(() -> new RuntimeException("Contact not found"));
-       contactUsDao.setActionKey(ActionType.DELETE);
-       contactUsRepo.delete(contactUsDao);
+    public boolean delete(Integer id) {
+        ContactUsDao contactUsDao = contactUsRepo.findById(id).orElse(null);
+        if (contactUsDao == null) {
+            return false; // Return false if the contact is not found
+        }
+
+        contactUsDao.setActionKey(ActionType.DELETE);
+        contactUsRepo.delete(contactUsDao); // Delete the contact
+        return true; // Return true to indicate successful deletion
     }
 
     // Convert DAO to DTO

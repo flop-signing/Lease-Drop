@@ -73,12 +73,15 @@ public class SubscriptionService {
 
     // Method to delete a subscription by ID
     @Transactional
-    public void delete(Integer id) {
-        SubscriptionDao subscriptionDao = subscriptionRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Subscription not found"));
+    public boolean delete(Integer id) {
+        SubscriptionDao subscriptionDao = subscriptionRepo.findById(id).orElse(null);
+        if (subscriptionDao == null) {
+            return false; // Return false if the subscription is not found
+        }
 
         subscriptionDao.setActionKey(ActionType.DELETE);
         subscriptionRepo.delete(subscriptionDao); // Delete the subscription
+        return true; // Return true to indicate successful deletion
     }
 
 

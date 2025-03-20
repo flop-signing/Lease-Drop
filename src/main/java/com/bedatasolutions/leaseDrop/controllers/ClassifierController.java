@@ -1,9 +1,7 @@
 package com.bedatasolutions.leaseDrop.controllers;
 
 import com.bedatasolutions.leaseDrop.dao.ClassifierDao;
-import com.bedatasolutions.leaseDrop.dao.CustomerDao;
 import com.bedatasolutions.leaseDrop.dto.ClassifierDto;
-import com.bedatasolutions.leaseDrop.dto.CustomerDto;
 import com.bedatasolutions.leaseDrop.dto.rest.RestPageResponse;
 import com.bedatasolutions.leaseDrop.dto.rest.RestQuery;
 import com.bedatasolutions.leaseDrop.services.ClassifierService;
@@ -12,9 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/classifiers")

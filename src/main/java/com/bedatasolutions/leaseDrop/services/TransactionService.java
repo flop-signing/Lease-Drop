@@ -75,12 +75,15 @@ public class TransactionService {
 
     // Method to delete a transaction by ID
     @Transactional
-    public void delete(Integer transactionId) {
-        TransactionDao transactionDao = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+    public boolean delete(Integer transactionId) {
+        TransactionDao transactionDao = transactionRepository.findById(transactionId).orElse(null);
+        if (transactionDao == null) {
+            return false; // Return false if the transaction is not found
+        }
 
         transactionDao.setActionKey(ActionType.DELETE);
         transactionRepository.delete(transactionDao); // Delete the transaction
+        return true; // Return true to indicate successful deletion
     }
 
 

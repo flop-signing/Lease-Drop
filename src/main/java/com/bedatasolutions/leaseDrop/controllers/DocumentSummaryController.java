@@ -56,8 +56,16 @@ public class DocumentSummaryController {
 
     // Delete Document Summary
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Integer id) {
-        documentSummaryService.delete(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Document Summary deleted successfully");
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        boolean isDeleted = documentSummaryService.delete(id); // Delete document summary
+
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
     }
+
 }

@@ -68,10 +68,14 @@ public class SoftwareConfigurationService {
 
     // Method to delete a software configuration by ID
     @Transactional
-    public void delete(Integer id) {
-        SoftwareConfigurationDao softwareConfigurationDao = softwareConfigurationRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Software Configuration not found"));
+    public boolean delete(Integer id) {
+        SoftwareConfigurationDao softwareConfigurationDao = softwareConfigurationRepo.findById(id).orElse(null);
+        if (softwareConfigurationDao == null) {
+            return false; // Return false if the software configuration is not found
+        }
+
         softwareConfigurationRepo.delete(softwareConfigurationDao); // Delete the software configuration
+        return true; // Return true to indicate successful deletion
     }
 
 

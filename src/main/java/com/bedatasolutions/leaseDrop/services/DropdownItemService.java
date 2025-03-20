@@ -65,13 +65,16 @@ public class DropdownItemService {
         return daoToDto(updatedDropdownItem);
 
     }
-
     // Method to delete a dropdown item by ID
     @Transactional
-    public void delete(Integer id) {
-        DropdownItemDao dropdownItemDao = dropdownItemRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dropdown Item not found"));
+    public boolean delete(Integer id) {
+        DropdownItemDao dropdownItemDao = dropdownItemRepo.findById(id).orElse(null);
+        if (dropdownItemDao == null) {
+            return false; // Return false if the dropdown item is not found
+        }
+
         dropdownItemRepo.delete(dropdownItemDao); // Delete the dropdown item
+        return true; // Return true to indicate successful deletion
     }
 
 

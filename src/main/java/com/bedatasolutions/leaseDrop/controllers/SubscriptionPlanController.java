@@ -54,8 +54,16 @@ public class SubscriptionPlanController {
 
     // Delete Subscription Plan
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Integer id) {
-        subscriptionPlanService.delete(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Subscription Plan deleted successfully: " + id);
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        boolean isDeleted = subscriptionPlanService.delete(id); // Delete subscription plan
+
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
     }
+
 }

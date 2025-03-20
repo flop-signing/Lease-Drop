@@ -20,9 +20,11 @@ import java.util.List;
 @Tag(name = "2. Role Controller", description = "View Interior images")
 public class RoleController {
 
-    @Autowired
-    private RoleService roleService;
+    private final RoleService roleService;
 
+    public RoleController(RoleService roleService) {
+        this.roleService = roleService;
+    }
 
 
     // Get All Roles
@@ -54,9 +56,16 @@ public class RoleController {
     }
     // Delete Role
     @DeleteMapping
-    public ResponseEntity<String> delete(@RequestBody Integer roleIdDto) {
-        roleService.delete(roleIdDto);  // Call the service to delete the role
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Role deleted successfully");
+    public ResponseEntity<Void> delete(@RequestBody Integer roleIdDto) {
+        boolean isDeleted = roleService.delete(roleIdDto); // Delete role
+
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
     }
 
     // Get Roles with Pagination

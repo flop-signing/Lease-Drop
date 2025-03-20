@@ -68,15 +68,17 @@ public class AdminSettingService {
         return daoToDto(updatedAdminSetting);
     }
 
-
-    // Method to delete an admin setting by ID
     @Transactional
-    public void delete(Integer id) {
-        AdminSettingDao adminSettingDao = adminSettingRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Admin setting not found"));
-        adminSettingRepo.delete(adminSettingDao); // Delete the admin setting
-    }
+// Method to delete an admin setting by ID
+    public boolean delete(Integer id) {
+        AdminSettingDao adminSettingDao = adminSettingRepo.findById(id).orElse(null);
+        if (adminSettingDao == null) {
+            return false; // Return false if the admin setting is not found
+        }
 
+        adminSettingRepo.delete(adminSettingDao); // Delete the admin setting
+        return true; // Return true to indicate successful deletion
+    }
 
 
 

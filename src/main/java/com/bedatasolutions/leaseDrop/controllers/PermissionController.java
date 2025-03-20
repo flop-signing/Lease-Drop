@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +18,12 @@ import java.util.List;
 @SecurityRequirement(name = "LeaseDrop-sec")
 @Tag(name = "1. Permission Module API Documentation", description = "The Permission Module in LeaseDrop is responsible for managing user permissions related to lease document analysis. ")
 public class PermissionController {
-    @Autowired
-    private PermissonService permissonService;
+
+    private final PermissonService permissonService;
+
+    public PermissionController(PermissonService permissonService) {
+        this.permissonService = permissonService;
+    }
 
     // Create Permission
     @PostMapping
@@ -51,11 +56,19 @@ public class PermissionController {
     }
 
     // Delete Role
+// Delete Permission
     @DeleteMapping
-    public ResponseEntity<String> delete(@RequestBody Integer permissionIdDto) {
-        permissonService.delete(permissionIdDto);  // Call the service to delete the role
-        return ResponseEntity.ok("Permission deleted successfully");
+    public ResponseEntity<Void> delete(@RequestBody Integer permissionIdDto) {
+        boolean isDeleted = permissonService.delete(permissionIdDto); // Delete permission
 
+        if (isDeleted) {
+            // Return HTTP 202 Accepted (with no message body)
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } else {
+            // Return HTTP 204 No Content (with no message body)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
     }
+
 
 }
